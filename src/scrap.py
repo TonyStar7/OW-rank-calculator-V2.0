@@ -118,11 +118,5 @@ async def scrap_roles(battletag):
         "open_queue_division": open_queue_division
     }
 
-    print("adding player to database...")
-    added = db.add_player(player_data)
-    if added:
-        print("player successfully added to database!")
-    else:
-        print("player not added (probably duplicate tag)")
-    db.print_players()
+    #db.print_players()
     return player_data

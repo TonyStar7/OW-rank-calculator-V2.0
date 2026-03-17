@@ -70,6 +70,12 @@ def update_player(player_data):
     ))
     connection.commit()
 
+def get_all_players():
+    sql = 'SELECT * FROM players ORDER BY id'
+    cursor.execute(sql)
+    return cursor.fetchall()
+
+
 # Ensure table exists before any operations
 create_player_table()
 

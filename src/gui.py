@@ -1,11 +1,10 @@
-import asyncio
 import customtkinter as ctk
-from PIL import Image, ImageTk
+from PIL import Image
 import os
 import processor as process
-from async_tkinter_loop import async_handler, async_mainloop
-import player_list as p_list
-
+from async_tkinter_loop import async_handler
+import player_list as data
+import connect_database as db
 
 
 font_size = 16
@@ -84,13 +83,19 @@ class Right_Frame(ctk.CTkFrame):
         self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=1)
 
-        button = ctk.CTkButton(self,
+        self.button = ctk.CTkButton(self,
                                 text="Refresh",
                                 fg_color="#1a498a",
                                 hover_color="#225bab",
                                 font=ctk.CTkFont(size=font_size, weight="bold"),
+                                command=async_handler(self.on_refresh_click)
                                 )
-        button.grid(row=0, column=2, padx=20, pady=20, sticky="n")
+        self.button.grid(row=0, column=2, padx=20, pady=20, sticky="n")
+
+    async def on_refresh_click(self):
+        self.button.configure(state="disabled", text="Refreshing...")
+        await process.refresh_players() 
+        self.button.configure(state="normal", text="Refresh")
 
 class Scrollable_Frame(ctk.CTkScrollableFrame):
     def __init__(self, master):
@@ -115,8 +120,9 @@ class Player_list_Frame(ctk.CTkFrame):
                 
                 Button = ctk.CTkButton(self,
                                         text=categories[i],
-                                        image=ctk.CTkImage(light_image=Image.open(img_paths[categories[i]]).resize((20, 20)),
-                                                            dark_image=Image.open(img_paths[categories[i]]).resize((20, 20))),
+                                        image=ctk.CTkImage(light_image=Image.open(img_paths[categories[i]]),
+                                                            dark_image=Image.open(img_paths[categories[i]]),
+                                                            size=(20, 20)),
                                         font=ctk.CTkFont(size=14, weight="bold"),
                                         )
                 
@@ -157,6 +163,27 @@ class App(ctk.CTk):
         self._set_appearance_mode("dark")
         self.title("Overwatch rank calculator 2.0")
         self.geometry("1920x1080")
+
+        db_players = db.get_all_players()
+        for player in db_players:
+            player_data = {
+                "tag": player[1],
+                "username": player[2],
+                "tank": player[3],
+                "tank_division": player[4],
+                "damage": player[5],
+                "damage_division": player[6],
+                "support": player[7],
+                "support_division": player[8],
+                "open_queue": player[9],
+                "open_queue_division": player[10],
+                "owner": player[11],
+                "date_added": player[12]
+            }
+            print(f"Adding player {player[0]}{player[1]} from db to dl")
+            data.data_list.append(player_data)
+            data.tmp_list.append(player_data)
+        print(data.data_list)
 
         self.deiconify()     # Un-minimize the window if it starts minimized
 
