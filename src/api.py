@@ -12,8 +12,8 @@ async def get_player_data(battletag):
         async with session.get(player_page) as response:
             if not check_request_status(response):
                 print(f"error api {response.status}")
-            else:
-                text = await response.text()
-                print("success api")
-                return text
+                return None
+            text = await response.text()
+            print("success api")
+            return text
     

@@ -1,7 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 from api import *
-from connect_database import *
+import connect_database as db
 from datetime import datetime
 
 BASE_URL = "https://overwatch.blizzard.com/en-us/career/"
@@ -13,7 +13,8 @@ role_icon_class = "Profile-playerSummary--role"
 
 
 async def scrap_player_page(battletag): # returns the page of the player
-    page_text = await get_player_data(battletag)
+    formatted_battletag = battletag.replace("#", "-")
+    page_text = await get_player_data(formatted_battletag)
     if not page_text:
         print("error getting player data")
         return None
@@ -118,10 +119,10 @@ async def scrap_roles(battletag):
     }
 
     print("adding player to database...")
-    added = add_player(player_data)
+    added = db.add_player(player_data)
     if added:
         print("player successfully added to database!")
     else:
         print("player not added (probably duplicate tag)")
-
-    print_players()
+    db.print_players()
+    return player_data
