@@ -20,7 +20,7 @@ def create_player_table ():
     ' open_queue TEXT,' \
     ' open_queue_division TEXT,' \
     ' owner TEXT,' \
-    ' date_added TIMESTAMP DEFAULT CURRENT_TIMESTAMP)' \
+    ' date_refreshed TIMESTAMP DEFAULT CURRENT_TIMESTAMP)' \
     
     cursor.execute(database)
     connection.commit()
@@ -40,7 +40,7 @@ def add_player(player_data):
             player_data.get("open_queue", "Unranked"),
             player_data.get("open_queue_division", "N/A"),
             player_data["owner"],
-            player_data["date_added"],
+            player_data["date_refreshed"],
         ))
         connection.commit()
     except sqlite3.IntegrityError as e:
@@ -65,7 +65,7 @@ def update_player(player_data):
         player_data.get("support_division", "N/A"),
         player_data.get("open_queue", "Unranked"),
         player_data.get("open_queue_division", "N/A"),
-        player_data["date_added"],
+        player_data["date_refreshed"],
         player_data["tag"]
     ))
     connection.commit()

@@ -11,9 +11,9 @@ async def get_player_data(battletag):
     async with aiohttp.ClientSession() as session:
         async with session.get(player_page) as response:
             if not check_request_status(response):
-                print(f"error api {response.status}")
+                print(f"error api for {battletag} : {response.status}")
                 return None
             text = await response.text()
-            print("success api")
+            print(f"success api for {battletag}")
             return text
     

@@ -8,7 +8,6 @@ async def add_player(battletag):
         print("adding player to database...")
         added = db.add_player(player_data)
         if added:
-            print("player successfully added to database!")
             data.data_list.append(player_data)
             data.tmp_list.append(player_data)
             print(data.data_list)
@@ -21,24 +20,29 @@ async def add_player(battletag):
     return False
 
 
-async def refresh_players():
-    battletags = [] #list of btags to refresh
-    if data.data_list:
-        print(data.data_list)
-        print(len(data.data_list))
-        for player in data.data_list:
-            print(f"Putting {player['username'] + str(player['tag'])} in battletags list for refresh...")
-            battletags.append((player["username"] + str(player["tag"])))
-            print(f"Successfully put {player['username'] + str(player['tag'])} in battletags list for refresh!")
+async def refresh_players(player=None):
+    to_refresh = [player] if player else data.data_list
+    if not to_refresh:
+        return False
+    for player in to_refresh:
+        battletag = f"{player['username']}{player['tag']}"
+        player_data = await scraper.scrap_roles(battletag)
 
-        for battletag in battletags:
-            print(f"Refreshing {battletag}...")
-            player_data = await scraper.scrap_roles(battletag)
-            print("finished refreshing, now updating database...")
-
-            if player_data is not None:
-                db.update_player(player_data)
-                print(f"Successfully updated {battletag} in database!")
+        if player_data is not None:
+            db.update_player(player_data) # updates db
+            for i, p in enumerate(data.data_list): # updates data
+                if p["tag"] == player_data["tag"]:
+                    # Match by tag
+                    data.data_list[i] = {
+                        "tag": player_data["tag"],
+                        "username": player_data["username"],
+                        "tank": player_data["tank"] + player_data["tank_division"],
+                        "damage": player_data["damage"] + player_data["damage_division"],
+                        "support": player_data["support"] + player_data["support_division"],
+                        "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
+                        "owner": player_data["owner"],
+                        "date_refreshed": player_data["date_refreshed"] 
+                        }
     return True
 
 def delete_player(tag):

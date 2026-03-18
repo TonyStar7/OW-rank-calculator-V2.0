@@ -67,7 +67,8 @@ def reg_search_rank(imgs_rank): # searches rank string
 
 def add_time():
     now = datetime.now()
-    date_added = now.strftime("%Y-%m-%d %H:%M:%S")
+    date_added = now.strftime("%d/%m/%Y %H:%M")
+    print(date_added)
     return date_added
 
 def split_battletag(battletag):
@@ -76,7 +77,7 @@ def split_battletag(battletag):
     return tag, username
 
 async def scrap_roles(battletag):
-    date_added = add_time()
+    date_refreshed = add_time()
     tag, username = split_battletag(battletag)
     page = await scrap_player_page(battletag)
 
@@ -86,6 +87,21 @@ async def scrap_roles(battletag):
     indiv_roles = list_role_block(page)
     if not indiv_roles:
         print("Warning: no roles found on page, saving all defaults")
+        player_data = {
+        "tag": tag,
+        "username": username,
+        "tank": "Unranked",
+        "tank_division": 'N/A',
+        "damage": "Unranked",
+        "damage_division": 'N/A',
+        "support": "Unranked",
+        "support_division": 'N/A',
+        "owner": "N/A",
+        "date_added": date_refreshed,
+        "open_queue": "Unranked",
+        "open_queue_division": 'N/A'
+        }
+        return player_data
     else:
         for curr_role in indiv_roles:
             role_icon_img = scrap_role_icon(curr_role)
@@ -113,10 +129,9 @@ async def scrap_roles(battletag):
         "support": support,
         "support_division": support_division,
         "owner": "N/A",
-        "date_added": date_added,
+        "date_refreshed": date_refreshed,
         "open_queue": open_queue,
         "open_queue_division": open_queue_division
     }
 
-    #db.print_players()
     return player_data
