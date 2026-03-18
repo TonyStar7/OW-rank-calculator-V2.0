@@ -7,7 +7,7 @@ import player_list as data
 import connect_database as db
 
 
-font_size = 16
+font_size = 17
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAR_DIR = os.path.dirname(FILE_DIR)
 IMG_DIR = os.path.join(PAR_DIR, "assets")
@@ -70,7 +70,10 @@ class Left_Frame(ctk.CTkFrame):
         if battletag != self.default_text and battletag.strip():
             self.button.configure(state="disabled", text="Searching...")
             
-            await process.add_player(battletag)
+            success = await process.add_player(battletag)
+
+            if success:
+                self.master.player_list.update_table()
             
             self.button.configure(state="normal", text="Add player")
             self.battletag_var.set(self.default_text)
@@ -94,7 +97,9 @@ class Right_Frame(ctk.CTkFrame):
 
     async def on_refresh_click(self):
         self.button.configure(state="disabled", text="Refreshing...")
-        await process.refresh_players() 
+        success = await process.refresh_players()
+        if success:
+            self.master.player_list.update_table() 
         self.button.configure(state="normal", text="Refresh")
 
 class Scrollable_Frame(ctk.CTkScrollableFrame):
@@ -105,38 +110,90 @@ class Scrollable_Frame(ctk.CTkScrollableFrame):
 class Player_list_Frame(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
-        categories = ["Delete", "Tag", "Username", "Tank", "Dps", "Support", "OQ", "Owner", "Date Added"]
+        self.categories = ["Delete", "Tag", "Username", "Tank", "Dps", "Support", "OQ", "Owner", "Date Added"]
+        self.tank_idx = self.categories.index("Tank")
+        self.damage_idx = self.categories.index("Dps")
+        self.support_idx = self.categories.index("Support")
+        self.open_queue_idx = self.categories.index("OQ")
         
-        for i in range(len(categories)):
+        for i in range(len(self.categories)): #Categories row
             if i == 0:
                 self.grid_rowconfigure(i, weight=1)
                 self.grid_columnconfigure(i, weight=0)
-            elif categories[i] in ["Tank", "Dps", "Support", "OQ"]:
+            elif self.categories[i] in ["Tank", "Dps", "Support", "OQ"]:
                 self.grid_columnconfigure(i, weight=1)
                 img_paths = {"Tank": TANK_IMG,
                             "Dps": DPS_IMG,
                             "Support": SUPPORT_IMG,
                             "OQ": OPEN_QUEUE_IMG}
                 
-                Button = ctk.CTkButton(self,
-                                        text=categories[i],
-                                        image=ctk.CTkImage(light_image=Image.open(img_paths[categories[i]]),
-                                                            dark_image=Image.open(img_paths[categories[i]]),
+                category_button = ctk.CTkButton(self,
+                                        text=self.categories[i],
+                                        image=ctk.CTkImage(light_image=Image.open(img_paths[self.categories[i]]),
+                                                            dark_image=Image.open(img_paths[self.categories[i]]),
                                                             size=(20, 20)),
-                                        font=ctk.CTkFont(size=14, weight="bold"),
+                                        font=ctk.CTkFont(size=font_size, weight="bold"),
                                         )
                 
-                Button.grid(row=0, column=i, padx=10, pady=10, sticky="w")
+                category_button.grid(row=0, column=i, padx=5, pady=5, sticky="w")
             else:
                 self.grid_columnconfigure(i, weight=1)
-                Button = ctk.CTkButton(self, text=categories[i], font=ctk.CTkFont(size=14, weight="bold"))
-                Button.grid(row=0, column=i, padx=10, pady=10, sticky="w")
+                Button = ctk.CTkButton(self, text=self.categories[i], font=ctk.CTkFont(size=font_size, weight="bold"))
+                Button.grid(row=0, column=i, padx=5, pady=5, sticky="w")
+        
+
+    def update_table(self):
+    # Clear existing player rows (except header)
+        for child in self.winfo_children():
+            if int(child.grid_info()["row"]) > 0:
+                child.destroy()
+
+        # Draw rows from the data list
+        for i, player_dict in enumerate(data.data_list):
+            row_idx = i + 1
+            
+            # Delete Button
+            del_btn = ctk.CTkButton(
+                self, text="", 
+                image=ctk.CTkImage(light_image=Image.open(CROSS_IMG_PATH), size=(20, 20)),
+                width=30, fg_color="transparent", hover_color="red",
+                command=lambda t=player_dict["tag"]: self.handle_delete(t)
+            )
+            del_btn.grid(row=row_idx, column=0, padx=10, pady=5)
+
+            # Data Labels
+            fields = ["tag", "username", "tank", "damage", "support", "open_queue", "owner", "date_added"]
+            for col_idx, field in enumerate(fields, start=1):
+                val = player_dict.get(field, "")
+                lbl = ctk.CTkLabel(self, text=str(val), font=ctk.CTkFont(size=14, weight="bold"))
+                lbl.grid(row=row_idx, column=col_idx, padx=5, pady=15, sticky="w")
     
+    def handle_delete(self, tag):
+        process.delete_player(tag)
+        self.update_table()
 
 
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
+
+        db_players = db.get_all_players()
+        data.data_list.clear()
+        data.tmp_list.clear()
+        for player in db_players:
+            player_data = {
+                "tag": player[1],
+                "username": player[2],
+                "tank": player[3] + player[4],
+                "damage": player[5] + player[6],
+                "support": player[7] + player[8],
+                "open_queue": player[9] + player[10],
+                "owner": player[11],
+                "date_added": player[12]
+            }
+            print(f"Adding player {player[0]}{player[1]} from db to dl")
+            data.data_list.append(player_data)
+            data.tmp_list.append(player_data)
 
         # Top row: controls (add/refresh)
         self.grid_rowconfigure(0, weight=1)
@@ -155,7 +212,7 @@ class App(ctk.CTk):
         self.list_frame.grid(row=0, column=1, padx=20, pady=20, sticky="nsew")
 
         self.player_list = Player_list_Frame(self.list_frame)
-        self.player_list.grid(row=0, column=0, padx=10, pady=10, sticky="nsew")
+        self.player_list.grid(row=0, column=0, padx=10, pady=10, sticky="nsew") #setting up categories in player frame
 
         self.refresh_section = Right_Frame(self)
         self.refresh_section.grid(row=0, column=2, padx=20, pady=20, sticky="nsew")
@@ -164,27 +221,10 @@ class App(ctk.CTk):
         self.title("Overwatch rank calculator 2.0")
         self.geometry("1920x1080")
 
-        db_players = db.get_all_players()
-        for player in db_players:
-            player_data = {
-                "tag": player[1],
-                "username": player[2],
-                "tank": player[3],
-                "tank_division": player[4],
-                "damage": player[5],
-                "damage_division": player[6],
-                "support": player[7],
-                "support_division": player[8],
-                "open_queue": player[9],
-                "open_queue_division": player[10],
-                "owner": player[11],
-                "date_added": player[12]
-            }
-            print(f"Adding player {player[0]}{player[1]} from db to dl")
-            data.data_list.append(player_data)
-            data.tmp_list.append(player_data)
+        self.player_list.update_table()
         print(data.data_list)
 
+            
         self.deiconify()     # Un-minimize the window if it starts minimized
 
 
