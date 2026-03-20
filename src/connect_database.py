@@ -26,7 +26,7 @@ def create_player_table ():
     connection.commit()
 
 def add_player(player_data):
-    sql = 'INSERT INTO players (tag, username, tank, tank_division, damage, damage_division, support, support_division, open_queue, open_queue_division, owner, date_added) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+    sql = 'INSERT INTO players (tag, username, tank, tank_division, damage, damage_division, support, support_division, open_queue, open_queue_division, owner, date_refreshed) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
     try:
         cursor.execute(sql, (
             player_data["tag"],
@@ -54,7 +54,7 @@ def delete_player(tag):
     connection.commit()
 
 def update_player(player_data):
-    sql = 'UPDATE players SET username=?, tank=?, tank_division=?, damage=?, damage_division=?, support=?, support_division=?, open_queue=?, open_queue_division=?, date_added=? WHERE tag=?'
+    sql = 'UPDATE players SET username=?, tank=?, tank_division=?, damage=?, damage_division=?, support=?, support_division=?, open_queue=?, open_queue_division=?, date_refreshed=? WHERE tag=?'
     cursor.execute(sql, (
         player_data["username"],
         player_data.get("tank", "Unranked"),

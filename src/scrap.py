@@ -67,9 +67,9 @@ def reg_search_rank(imgs_rank): # searches rank string
 
 def add_time():
     now = datetime.now()
-    date_added = now.strftime("%d/%m/%Y %H:%M")
-    print(date_added)
-    return date_added
+    date_refreshed = now.strftime("%d/%m/%Y %H:%M")
+    print(date_refreshed)
+    return date_refreshed
 
 def split_battletag(battletag):
     tag = '#' + battletag.split('#')[1]
@@ -97,7 +97,7 @@ async def scrap_roles(battletag):
         "support": "Unranked",
         "support_division": 'N/A',
         "owner": "N/A",
-        "date_added": date_refreshed,
+        "date_refreshed": date_refreshed,
         "open_queue": "Unranked",
         "open_queue_division": 'N/A'
         }

@@ -117,7 +117,7 @@ class Right_Frame(ctk.CTkFrame):
         self.refresh_button.grid(row=0, column=2, padx=20, pady=20, sticky="n")
 
         self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
-        self.status_label.grid(row=1, column=0, columnspan=3, padx=20, pady=(0, 20), sticky="w")
+        self.status_label.grid(row=1, column=0, columnspan=3, padx=20, pady=(0, 20), sticky="nsew")
 
     async def on_refresh_click(self):
         self.refresh_button.configure(state="disabled", text="Refreshing...")
@@ -202,7 +202,7 @@ class Player_list_Frame(ctk.CTkFrame):
             self.create_delete_button(row_idx, player_dict, row_color)
 
             # Data Labels
-            fields = ["tag", "username", "tank", "damage", "support", "open_queue", "owner", "date_added"]
+            fields = ["tag", "username", "tank", "damage", "support", "open_queue", "owner", "date_refreshed"]
             role_fields = ["tank", "damage", "support", "open_queue"]
 
             for col_idx, field in enumerate(fields, start=1):
@@ -210,7 +210,7 @@ class Player_list_Frame(ctk.CTkFrame):
                 #if role columns, make btn
                 if field in role_fields:
                     self.create_rank_button(row_idx, col_idx, val, row_color)
-                elif field == "date_added":
+                elif field == "date_refreshed":
                     self.create_datebutton(row_idx, col_idx, val, row_color, player_dict)
                 else:
                     #if not role column, make label
@@ -300,17 +300,19 @@ class Player_list_Frame(ctk.CTkFrame):
         lbl.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
     def create_datebutton(self, row_idx, col_idx, date_text, row_color, player_dict):
-        btn = ctk.CTkButton(self, 
+        self.date_btn = ctk.CTkButton(self, 
                             text=str(date_text), 
                             font=ctk.CTkFont(size=14, weight="bold"), 
                             fg_color=row_color, 
                             corner_radius=0, 
                             height=self.widget_height,
-                            command= async_handler(lambda p=player_dict: self.refresh_single_row(p)))
-        btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
+                            command= async_handler(lambda p=player_dict, b=None: self.on_refresh_single_click(p, b)))
+        self.date_btn.configure(command=async_handler(lambda p=player_dict, b=self.date_btn: self.on_refresh_single_click(p, b)))
+        self.date_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
-    async def refresh_single_row(self, player_dict):
-    # Pass the specific player dictionary to the function
+
+    async def on_refresh_single_click(self, player_dict, button):
+        button.configure(state="disabled", text="Refreshing...")
         success = await process.refresh_players(player=player_dict)
         if success:
             self.update_table()
@@ -331,7 +333,7 @@ class App(ctk.CTk):
                 "support": player[7] + player[8],
                 "open_queue": player[9] + player[10],
                 "owner": player[11],
-                "date_added": player[12]
+                "date_refreshed": player[12]
             }
             print(f"Adding player {player[0]}{player[1]} from db to dl")
             data.data_list.append(player_data)
