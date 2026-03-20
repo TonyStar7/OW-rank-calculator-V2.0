@@ -84,39 +84,58 @@ def get_rank_index(rank_text):
         print(e)
         return -1
     
-def check_rank_category(rank_text):
+def get_span(rank_text):    # Gets the range
     curr_idx = get_rank_index(rank_text)
-    if curr_idx == -1:
-        return "Unranked"
-    if curr_idx < 22:
-        return "Max Diamond 4"
-    if curr_idx >= 22 and curr_idx <= 24:
-        return "min D3 max D1"
-    return "min Master"
+    if curr_idx <= 19:       # Bronze 5 to Platinum 1
+        min_span, max_span = 5, 5
+    elif 20 <= curr_idx <= 24: # Diamond
+        min_span , max_span = 5, 4
+    elif 25 <= curr_idx <= 29: # Master
+        min_span, max_span = 4, 3
+    elif 30 <= curr_idx <= 34: # Grandmaster
+        min_span, max_span = 3, 2
+    else:                    # Champion
+        min_span, max_span = 2, 2
+    return min_span, max_span
 
-def get_span(rank_text):
-    curr_idx = get_rank_index(rank_text)
-    if curr_idx <= 24: # Bronze 5 to Diamond 1
-        return 5
-    if 25 <= curr_idx <= 29: # Master
-        return 4
-    if 30 <= curr_idx <= 34: # Grandmaster
-        return 3
-    return 2 # Champion
+def first_global_span(min_span, max_span, new_idx): # calculates range for the first player added
+    minimum = max(0, new_idx - min_span)
+    maximum = min(len(Ranks_list) - 1, new_idx + max_span)
+    return minimum, maximum
 
-def can_squad_play(rank1, rank2):
-    idx1 = get_rank_index(rank1)
-    idx2 = get_rank_index(rank2)
+def add_squad(new_player_rank):
+    global global_min_idx, global_max_idx
+
+    new_idx = get_rank_index(new_player_rank)
+    if new_idx == -1:
+        print("Player cannot be added")
+        return False
     
-    if idx1 == -1 or idx2 == -1:
-        return "Unranked"
+    min_span, max_span = get_span(new_player_rank)
+    first_min_idx, first_max_idx = first_global_span(min_span, max_span, new_idx)
 
-    distance = abs(idx1 - idx2)
+    if not data.selected_accounts:
+        global_min_idx = first_min_idx
+        global_max_idx = first_max_idx
+        data.selected_accounts.append(new_player_rank)
+        print(f"First play added, selected rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}, current list : {data.selected_accounts}")
     
-    # The rule: The highest player dictates the limit
-    highest_rank = rank1 if idx1 > idx2 else rank2
-    allowed_span = get_span(highest_rank)
-    
-    return distance <= allowed_span
+    elif global_min_idx <= new_idx <= global_max_idx:
+        new_player_min = max(0, new_idx - min_span)
+        new_player_max = min(len(Ranks_list) - 1, new_idx + max_span)
 
-print(can_squad_play("Diamond5", "Master5"))
+        global_min_idx = max(global_min_idx, new_player_min)
+        global_max_idx = min(global_max_idx, new_player_max)
+        data.selected_accounts.append(new_player_rank)
+        print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}, current list : {data.selected_accounts}")
+    else:
+        print("Player cannot be added, not in range")
+
+
+def test():
+    while len(data.selected_accounts) < 5:
+        rank = input("Rank?\n")
+        add_squad(rank)
+        print(data.selected_accounts)
+
+test()
