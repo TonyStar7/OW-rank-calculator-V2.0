@@ -58,7 +58,7 @@ class Left_Frame(ctk.CTkFrame):
         self.add_button.grid(row=0, column=1, padx=(0, 20), pady=20, sticky="w")
 
         self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
-        self.status_label.grid(row=1, column=0, columnspan=2, padx=20, pady=(0, 20), sticky="w")
+        self.status_label.grid(row=1, column=0, columnspan=2, padx=20, pady=(0, 20))
 
         self.bind("<Button-1>", self.drop_focus)
         self.add_entry.bind("<FocusIn>", self.handle_focus_in)
@@ -87,8 +87,8 @@ class Left_Frame(ctk.CTkFrame):
             success = await process.add_player(battletag)
 
             if success:
-                self.master.player_list.update_table()
-                self.status_label.configure(text="Player added", text_color="#116113")
+                self.master.player_list.update_table(data.tmp_list)
+                self.status_label.configure(text="Player added", text_color="#20c11a")
                 self.after(3000, lambda: self.status_label.configure(text=""))
             else:
                 self.status_label.configure(text="Player not found", text_color="red")
@@ -123,7 +123,7 @@ class Right_Frame(ctk.CTkFrame):
         self.refresh_button.configure(state="disabled", text="Refreshing...")
         success = await process.refresh_players()
         if success:
-            self.master.player_list.update_table()
+            self.master.player_list.update_table(data.tmp_list)
             self.status_label.configure(text="Players refreshed", text_color="#20c11a")
             self.after(3000, lambda: self.status_label.configure(text=""))
         else:
@@ -144,6 +144,12 @@ class Player_list_Frame(ctk.CTkFrame):
         self.support_idx = self.categories.index("Support")
         self.open_queue_idx = self.categories.index("OQ")
         self.widget_height = 60
+        self.roles = {
+            "Tank": "tank",
+            "Dps": "damage",
+            "Support": "support",
+            "OQ": "open_queue"
+        }
         
         for i in range(len(self.categories)): #Categories row
             if self.categories[i] == "Delete": #delete button column
@@ -155,6 +161,7 @@ class Player_list_Frame(ctk.CTkFrame):
                 tag_label = ctk.CTkLabel(self, text=self.categories[i], font=ctk.CTkFont(size=font_size, weight="bold"))
                 tag_label.grid(row=0, column=i, padx=5, pady=5)
 
+
             elif self.categories[i] in ["Tank", "Dps", "Support", "OQ"]: #categories columns with icons
                 self.grid_columnconfigure(i, weight=1)
                 img_paths = {"Tank": TANK_IMG,
@@ -162,13 +169,17 @@ class Player_list_Frame(ctk.CTkFrame):
                             "Support": SUPPORT_IMG,
                             "OQ": OPEN_QUEUE_IMG}
                 
+                role_key = self.roles[self.categories[i]]
                 category_button = ctk.CTkButton(self,
                                         text=self.categories[i],
                                         image=ctk.CTkImage(light_image=Image.open(img_paths[self.categories[i]]),
                                                             dark_image=Image.open(img_paths[self.categories[i]]),
                                                             size=(20, 20)),
                                         font=ctk.CTkFont(size=font_size, weight="bold"),
+                                        cursor="hand2",
+                                        command=lambda player_role=role_key: self.sort_and_refresh(player_role)
                                         )
+                
                 
                 category_button.grid(row=0, column=i, padx=5, pady=5)
             elif self.categories[i] == "Date Added":
@@ -184,14 +195,14 @@ class Player_list_Frame(ctk.CTkFrame):
                 Button.grid(row=0, column=i, padx=5, pady=5)
         
 
-    def update_table(self): #redraw table, updates table with data_list
+    def update_table(self, list): #redraw table, updates table with data_list
         bg_color = "#2b2b2b"
         alt_bgcolor = "#363636"
         # Clear existing player rows (except header)
         self.remove_player_rows()
 
         # Draw rows from the data list
-        for i, player_dict in enumerate(data.data_list):
+        for i, player_dict in enumerate(list):
             row_idx = i + 1
             if row_idx % 2 == 0:
                 row_color = alt_bgcolor
@@ -222,7 +233,7 @@ class Player_list_Frame(ctk.CTkFrame):
         print(confirm_pop)
         if confirm_pop == "yes":
             process.delete_player(tag)
-            self.update_table()
+            self.update_table(data.tmp_list)
 
     def remove_player_rows(self):
         for child in self.winfo_children():
@@ -236,7 +247,8 @@ class Player_list_Frame(ctk.CTkFrame):
                 width=30, fg_color=row_color, hover_color="red",
                 command=lambda t=player_dict["tag"]: self.handle_delete(t),
                 height=self.widget_height,
-                corner_radius=0
+                corner_radius=0,
+                cursor="hand2"
             )
         del_btn.grid(row=row_idx, column=0, padx=0, pady=0, sticky="nsew")
 
@@ -282,7 +294,8 @@ class Player_list_Frame(ctk.CTkFrame):
                                 font=ctk.CTkFont(size=font_size, weight="bold"), 
                                 fg_color=row_color, 
                                 corner_radius=0, 
-                                height=self.widget_height
+                                height=self.widget_height,
+                                cursor="hand2"
                                 )
             rank_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
         else:
@@ -291,7 +304,7 @@ class Player_list_Frame(ctk.CTkFrame):
                                 font=ctk.CTkFont(size=14, weight="bold"), 
                                 fg_color=row_color, 
                                 corner_radius=0, 
-                                height=self.widget_height
+                                height=self.widget_height,
                                 )
             unranked_label.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
@@ -310,12 +323,15 @@ class Player_list_Frame(ctk.CTkFrame):
         self.date_btn.configure(command=async_handler(lambda p=player_dict, b=self.date_btn: self.on_refresh_single_click(p, b)))
         self.date_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
+    def sort_and_refresh(self, role_key):
+        process.sort_by_role(role_key)
+        self.update_table(data.tmp_list)
 
     async def on_refresh_single_click(self, player_dict, button):
         button.configure(state="disabled", text="Refreshing...")
         success = await process.refresh_players(player=player_dict)
         if success:
-            self.update_table()
+            self.update_table(data.tmp_list)
 
 class App(ctk.CTk):
     def __init__(self):
@@ -365,7 +381,7 @@ class App(ctk.CTk):
         self.title("Overwatch rank calculator 2.0")
         self.geometry("1920x1080")
 
-        self.player_list.update_table()
+        self.player_list.update_table(data.data_list)   #init with real list first
 
             
         self.deiconify()     # Un-minimize the window if it starts minimized

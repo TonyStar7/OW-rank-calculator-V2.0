@@ -72,9 +72,12 @@ def add_time():
     return date_refreshed
 
 def split_battletag(battletag):
-    tag = '#' + battletag.split('#')[1]
-    username = battletag.split('#')[0]
-    return tag, username
+    try:
+        tag = '#' + battletag.split('#')[1]
+        username = battletag.split('#')[0]
+        return tag, username
+    except IndexError:
+        return None
 
 async def scrap_roles(battletag):
     date_refreshed = add_time()

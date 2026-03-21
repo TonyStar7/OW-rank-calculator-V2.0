@@ -42,7 +42,7 @@ async def refresh_players(player=None):
             for i, p in enumerate(data.data_list): # updates data
                 if p["tag"] == player_data["tag"]:
                     # Match by tag
-                    data.data_list[i] = {
+                    updated_player = {
                         "tag": player_data["tag"],
                         "username": player_data["username"],
                         "tank": player_data["tank"] + player_data["tank_division"],
@@ -52,6 +52,7 @@ async def refresh_players(player=None):
                         "owner": player_data["owner"],
                         "date_refreshed": player_data["date_refreshed"] 
                         }
+                    data.tmp_list[i] = data.data_list[i] = updated_player
     return True
 
 def delete_player(tag):
@@ -98,7 +99,7 @@ def get_span(rank_text):    # Gets the range
         min_span, max_span = 2, 2
     return min_span, max_span
 
-def first_global_span(min_span, max_span, new_idx): # calculates range for the first player added
+def global_range(min_span, max_span, new_idx): # calculates range for the first player added
     minimum = max(0, new_idx - min_span)
     maximum = min(len(Ranks_list) - 1, new_idx + max_span)
     return minimum, maximum
@@ -112,24 +113,27 @@ def add_squad(new_player_rank):
         return False
     
     min_span, max_span = get_span(new_player_rank)
-    first_min_idx, first_max_idx = first_global_span(min_span, max_span, new_idx)
+    new_player_min, new_player_max = global_range(min_span, max_span, new_idx)
 
-    if not data.selected_accounts:
-        global_min_idx = first_min_idx
-        global_max_idx = first_max_idx
-        data.selected_accounts.append(new_player_rank)
-        print(f"First play added, selected rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}, current list : {data.selected_accounts}")
-    
-    elif global_min_idx <= new_idx <= global_max_idx:
-        new_player_min = max(0, new_idx - min_span)
-        new_player_max = min(len(Ranks_list) - 1, new_idx + max_span)
+    if data.selected_accounts and not global_min_idx <= new_idx <= global_max_idx:
+        print("Player cannot be added, not in range")
+        return False
 
+    if not data.selected_accounts:       #check if first player
+        global_min_idx = new_player_min
+        global_max_idx = new_player_max
+    else:                                #check if between range
         global_min_idx = max(global_min_idx, new_player_min)
         global_max_idx = min(global_max_idx, new_player_max)
-        data.selected_accounts.append(new_player_rank)
-        print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}, current list : {data.selected_accounts}")
-    else:
-        print("Player cannot be added, not in range")
+
+    data.selected_accounts.append(new_player_rank)
+    print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}")
+    return True
+
+
+def sort_by_role(role):
+    data.tmp_list.sort(key=lambda player: get_rank_index(str(player[role])), reverse=True)
+
 
 
 def test():
@@ -138,4 +142,3 @@ def test():
         add_squad(rank)
         print(data.selected_accounts)
 
-test()
