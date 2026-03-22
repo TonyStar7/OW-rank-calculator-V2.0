@@ -38,6 +38,7 @@ async def refresh_players(player=None):
         player_data = await scraper.scrap_roles(battletag)
 
         if player_data is not None:
+            player_data["owner"] = player["owner"]
             db.update_player(player_data) # updates db
             for i, p in enumerate(data.data_list): # updates data
                 if p["tag"] == player_data["tag"]:
@@ -49,7 +50,7 @@ async def refresh_players(player=None):
                         "damage": player_data["damage"] + player_data["damage_division"],
                         "support": player_data["support"] + player_data["support_division"],
                         "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
-                        "owner": player_data["owner"],
+                        "owner": p["owner"],
                         "date_refreshed": player_data["date_refreshed"] 
                         }
                     data.tmp_list[i] = data.data_list[i] = updated_player
@@ -110,14 +111,15 @@ def add_squad(new_player_rank):
     new_idx = get_rank_index(new_player_rank)
     if new_idx == -1:
         print("Player cannot be added")
-        return False
+        
     
     min_span, max_span = get_span(new_player_rank)
     new_player_min, new_player_max = global_range(min_span, max_span, new_idx)
 
-    if data.selected_accounts and not global_min_idx <= new_idx <= global_max_idx:
-        print("Player cannot be added, not in range")
-        return False
+    if data.selected_accounts:
+        if global_min_idx <= new_idx <= global_max_idx:
+            print("Player cannot be added, not in range")
+            
 
     if not data.selected_accounts:       #check if first player
         global_min_idx = new_player_min
@@ -128,12 +130,23 @@ def add_squad(new_player_rank):
 
     data.selected_accounts.append(new_player_rank)
     print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}")
-    return True
+    
 
 
 def sort_by_role(role):
-    data.tmp_list.sort(key=lambda player: get_rank_index(str(player[role])), reverse=True)
+    def get_sort_value(player):
+        val = player.get(role)
 
+        if role in ["tank", "damage", "support", "open_queue"]:
+            return get_rank_index(str(val))
+        
+        text_val = str(val or "").strip().lower()
+        if text_val == "n/a" or text_val == "":
+            return "zzzzzzzzzzz"
+        return text_val
+    
+    is_rank_col = role in ["tank", "damage", "support", "open_queue"]
+    data.tmp_list.sort(key=get_sort_value, reverse=is_rank_col)
 
 
 def test():

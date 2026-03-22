@@ -177,18 +177,27 @@ class Player_list_Frame(ctk.CTkFrame):
                                                             size=(20, 20)),
                                         font=ctk.CTkFont(size=font_size, weight="bold"),
                                         cursor="hand2",
-                                        command=lambda player_role=role_key: self.sort_and_refresh(player_role)
+                                        command=lambda player_role=role_key: self.sort_and_refresh(role_key=player_role)
                                         )
-                
-                
                 category_button.grid(row=0, column=i, padx=5, pady=5)
-            elif self.categories[i] == "Date Added":
+
+            elif self.categories[i] == "Owner":     #Owner button
+                self.grid_columnconfigure(i, weight=1)
+                owner_button = ctk.CTkButton(self,
+                                            text=self.categories[i], 
+                                            font=ctk.CTkFont(size=font_size, weight="bold"),
+                                            command=lambda: self.sort_and_refresh(role_key="owner")
+                                            )
+                owner_button.grid(row=0, column=i, padx=5, pady=5)
+
+            elif self.categories[i] == "Date Added":     #Date button
                 self.grid_columnconfigure(i, weight=1)
                 date_button = ctk.CTkButton(self,
                                             text=self.categories[i], 
                                             font=ctk.CTkFont(size=font_size, weight="bold")
                                             )
                 date_button.grid(row=0, column=i, padx=5, pady=5)
+
             else:
                 self.grid_columnconfigure(i, weight=1)
                 Button = ctk.CTkButton(self, text=self.categories[i], font=ctk.CTkFont(size=font_size, weight="bold"))
@@ -287,6 +296,7 @@ class Player_list_Frame(ctk.CTkFrame):
                 target_width = int(calculated_height * (orig_w / orig_h))
 
             img_path = game_ranks[found_key]
+            full_rank = f"{rank}{division}"
 
             rank_btn = ctk.CTkButton(self, 
                                 text=division,
@@ -295,7 +305,8 @@ class Player_list_Frame(ctk.CTkFrame):
                                 fg_color=row_color, 
                                 corner_radius=0, 
                                 height=self.widget_height,
-                                cursor="hand2"
+                                cursor="hand2",
+                                command=lambda rank=full_rank:process.add_squad(full_rank)
                                 )
             rank_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
         else:
