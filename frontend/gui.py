@@ -3,17 +3,22 @@ from tkinter import messagebox
 import customtkinter as ctk
 from PIL import Image
 import os
-import processor as process
-from async_tkinter_loop import async_handler
-import player_list as data
-import connect_database as db
+import sys
 import re
+from async_tkinter_loop import async_handler
+
+PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(PROJECT_ROOT)
+
+import backend.src.processor as process
+import backend.src.player_list as data
+import backend.src.connect_database as db
 
 
 font_size = 16
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAR_DIR = os.path.dirname(FILE_DIR)
-IMG_DIR = os.path.join(PAR_DIR, "assets")
+IMG_DIR = os.path.join(PAR_DIR, "frontend", "assets")
 
 CROSS_IMG_PATH = os.path.join(IMG_DIR, "red_cross.png")
 TANK_IMG = os.path.join(IMG_DIR, "Tank_icon.png")

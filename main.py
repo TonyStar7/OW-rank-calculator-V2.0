@@ -1,6 +1,6 @@
 from async_tkinter_loop import async_mainloop
-from scrap import *
-from gui import App
+from backend.src.scrap import *
+from frontend.gui import App
 
 
 if __name__ == "__main__":

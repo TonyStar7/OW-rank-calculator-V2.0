@@ -1,7 +1,6 @@
 import re
 from bs4 import BeautifulSoup
-from api import *
-import connect_database as db
+from .api import *
 from datetime import datetime
 
 BASE_URL = "https://overwatch.blizzard.com/en-us/career/"

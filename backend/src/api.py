@@ -1,4 +1,3 @@
-import requests
 import aiohttp
 
 BASE_URL = "https://overwatch.blizzard.com/en-us/career/"

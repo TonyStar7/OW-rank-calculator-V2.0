@@ -1,7 +1,6 @@
-import scrap as scraper
-import player_list as data
-import connect_database as db
-import re
+from . import scrap as scraper
+from . import player_list as data
+from .import connect_database as db
 
 async def add_player(battletag):    
     player_data = await scraper.scrap_roles(battletag)
@@ -65,8 +64,6 @@ def delete_player(tag):
     print(f"Successfully deleted player with tag {tag} from database!")
     return True
 
-
-
 Ranks_list = ["Bronze5", "Bronze4", "Bronze3", "Bronze2", "Bronze1", 
                 "Silver5", "Silver4", "Silver3", "Silver2", "Silver1", 
                 "Gold5", "Gold4", "Gold3", "Gold2", "Gold1", 
@@ -75,7 +72,6 @@ Ranks_list = ["Bronze5", "Bronze4", "Bronze3", "Bronze2", "Bronze1",
                 "Master5", "Master4", "Master3", "Master2", "Master1", 
                 "Grandmaster5", "Grandmaster4", "Grandmaster3", "Grandmaster2", "Grandmaster1",
                 "Champion5", "Champion4", "Champion3", "Champion2", "Champion1"]
-
 
 def get_rank_index(rank_text):
     if "Unranked" in rank_text:
