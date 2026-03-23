@@ -105,33 +105,113 @@ def global_range(min_span, max_span, new_idx): # calculates range for the first 
     maximum = min(len(Ranks_list) - 1, new_idx + max_span)
     return minimum, maximum
 
-def add_squad(new_player_rank):
-    global global_min_idx, global_max_idx
 
+def add_rank(new_player_rank):    
+    global global_min_idx, global_max_idx
     new_idx = get_rank_index(new_player_rank)
+
     if new_idx == -1:
         print("Player cannot be added")
-        
+        return False
     
     min_span, max_span = get_span(new_player_rank)
     new_player_min, new_player_max = global_range(min_span, max_span, new_idx)
 
     if data.selected_accounts:
-        if global_min_idx <= new_idx <= global_max_idx:
+        if not (global_min_idx <= new_idx <= global_max_idx):
             print("Player cannot be added, not in range")
-            
-
-    if not data.selected_accounts:       #check if first player
-        global_min_idx = new_player_min
-        global_max_idx = new_player_max
-    else:                                #check if between range
+            return False
+        
         global_min_idx = max(global_min_idx, new_player_min)
         global_max_idx = min(global_max_idx, new_player_max)
 
-    data.selected_accounts.append(new_player_rank)
-    print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}")
-    
+    else:                       #check if first player
+        global_min_idx = new_player_min
+        global_max_idx = new_player_max                              #check if between range
 
+    print(f"New player added, new rank range: {Ranks_list[global_min_idx]} to {Ranks_list[global_max_idx]}")
+    return True
+
+def can_add_role(role):
+    if role == "open_queue":
+        return True
+    if role == "tank":
+        return data.role_list.count("tank") < 1
+    else:
+        return data.role_list.count(role) < 2
+    
+def can_add_owner(owner):
+    if str(owner).strip().upper() == "N/A":
+        return True
+    
+    clean_owner = str(owner).lower()
+    for existing_owner in data.owner_list:
+        clean_existing_owner = str(existing_owner).lower()
+        if clean_existing_owner == "n/a":
+            continue
+        if clean_existing_owner in clean_owner or clean_owner in clean_existing_owner:
+            return False
+    return True
+
+def recalculate_range():
+    global global_min_idx, global_max_idx
+    global_min_idx = 0
+    global_max_idx = len(Ranks_list) - 1
+    
+    for acc in data.selected_accounts:
+        rank = acc["rank"]
+        idx = get_rank_index(rank)
+        min_span, max_span = get_span(rank)
+        new_player_min, new_player_max = global_range(min_span, max_span, idx)
+        global_min_idx = max(global_min_idx, new_player_min)
+        global_max_idx = min(global_max_idx, new_player_max)
+
+def handle_add_squad(username, owner, role, rank):
+    global global_min_idx, global_max_idx
+    existing_acc = next((acc for acc in data.selected_accounts if acc["username"] == username and acc["role"] == role), None)
+
+    # Removing account
+    if existing_acc:
+        data.selected_accounts.remove(existing_acc)
+        if owner in data.owner_list: data.owner_list.remove(owner)
+        if role in data.role_list: data.role_list.remove(role)
+        
+        if not data.selected_accounts:
+            global_min_idx = 0
+            global_max_idx = len(Ranks_list) - 1
+            print("Squad empty, resetting rank range")
+        else:
+            recalculate_range()
+        print(f"Removed {username} {role} {rank} from the squad")
+        print(data.owner_list)
+        print(data.role_list)
+        return True
+    
+    # Check if can add account
+    if not can_add_owner(owner):
+        print(f"Owner {owner} already exists in the squad")
+        return False
+    
+    if not can_add_role(role):
+        print(f"Too many {role} in the squad")
+        return False
+    
+    # Adding account
+    if add_rank(rank):
+        data.owner_list.append(owner)
+        data.role_list.append(role)
+
+        data.selected_accounts.append({
+            "username": username, 
+            "owner": owner, 
+            "role": role, 
+            "rank": rank
+        })
+        print(f"Successfully added {username} {role} {rank} to the squad")
+        print(data.role_list)
+        print(data.owner_list)
+        return True
+    return False
 
 def sort_by_role(role):
     def get_sort_value(player):

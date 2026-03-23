@@ -150,7 +150,8 @@ class Player_list_Frame(ctk.CTkFrame):
             "Support": "support",
             "OQ": "open_queue"
         }
-        
+        self.rank_buttons = []
+
         for i in range(len(self.categories)): #Categories row
             if self.categories[i] == "Delete": #delete button column
                 self.grid_rowconfigure(i, weight=1)
@@ -206,11 +207,12 @@ class Player_list_Frame(ctk.CTkFrame):
 
     def update_table(self, list): #redraw table, updates table with data_list
         bg_color = "#2b2b2b"
-        alt_bgcolor = "#363636"
+        alt_bgcolor = "#303030"
         # Clear existing player rows (except header)
+        self.rank_buttons = []
         self.remove_player_rows()
 
-        # Draw rows from the data list
+        # Drawing rows
         for i, player_dict in enumerate(list):
             row_idx = i + 1
             if row_idx % 2 == 0:
@@ -226,15 +228,15 @@ class Player_list_Frame(ctk.CTkFrame):
             role_fields = ["tank", "damage", "support", "open_queue"]
 
             for col_idx, field in enumerate(fields, start=1):
-                val = player_dict.get(field, "")
+                rank_text = player_dict.get(field, "")  #gets the rank from the role
                 #if role columns, make btn
-                if field in role_fields:
-                    self.create_rank_button(row_idx, col_idx, val, row_color)
+                if field in role_fields:   #just gets the role (field)
+                    self.create_rank_button(row_idx, col_idx, rank_text, row_color, player_dict, field)
                 elif field == "date_refreshed":
-                    self.create_datebutton(row_idx, col_idx, val, row_color, player_dict)
+                    self.create_datebutton(row_idx, col_idx, rank_text, row_color, player_dict)
                 else:
                     #if not role column, make label
-                    self.create_label(row_idx, col_idx, val, row_color)
+                    self.create_label(row_idx, col_idx, rank_text, row_color)
         return True        
 
     def handle_delete(self, tag):
@@ -261,7 +263,7 @@ class Player_list_Frame(ctk.CTkFrame):
             )
         del_btn.grid(row=row_idx, column=0, padx=0, pady=0, sticky="nsew")
 
-    def create_rank_button(self, row_idx, col_idx, rank_text, row_color):
+    def create_rank_button(self, row_idx, col_idx, rank_text, row_color, player_dict, role):
         game_ranks = {
             "Silver": SILVER_IMG,
             "Gold": GOLD_IMG,
@@ -273,7 +275,8 @@ class Player_list_Frame(ctk.CTkFrame):
         display_text = str(rank_text).replace("N/A", "").strip() #Unranked case
         if display_text != "Unranked":
             rank = re.findall("[a-zA-Z]+", display_text)[0]
-            division = re.findall("[0-9]+", display_text)
+            division_list = re.findall("[0-9]+", display_text)
+            division = division_list[0] if len(division_list) > 0 else ""
         else:
             rank = "Unranked"
 
@@ -291,12 +294,14 @@ class Player_list_Frame(ctk.CTkFrame):
             aspect_ratio = orig_h / orig_w
             calculated_height = int(target_width * aspect_ratio)
 
-            if calculated_height > 30: # 30 is a safe max height for a 50px row
+            if calculated_height > 30:
                 calculated_height = 30
                 target_width = int(calculated_height * (orig_w / orig_h))
 
             img_path = game_ranks[found_key]
             full_rank = f"{rank}{division}"
+            username = player_dict["username"]
+            owner = player_dict["owner"]
 
             rank_btn = ctk.CTkButton(self, 
                                 text=division,
@@ -306,8 +311,16 @@ class Player_list_Frame(ctk.CTkFrame):
                                 corner_radius=0, 
                                 height=self.widget_height,
                                 cursor="hand2",
-                                command=lambda rank=full_rank:process.add_squad(full_rank)
+                                command=lambda u=username, o=owner, r=role, f=full_rank: self.process_and_check(u, o, r, f)
                                 )
+            rank_btn.player_owner = player_dict["owner"]
+            rank_btn.player_role = role
+            rank_btn.player_rank = full_rank
+            rank_btn.username = player_dict["username"]
+            rank_btn.original_color = row_color
+
+            self.rank_buttons.append(rank_btn)
+
             rank_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
         else:
             unranked_label = ctk.CTkLabel(self, 
@@ -337,6 +350,7 @@ class Player_list_Frame(ctk.CTkFrame):
     def sort_and_refresh(self, role_key):
         process.sort_by_role(role_key)
         self.update_table(data.tmp_list)
+        self.validate_buttons()
 
     async def on_refresh_single_click(self, player_dict, button):
         button.configure(state="disabled", text="Refreshing...")
@@ -344,6 +358,34 @@ class Player_list_Frame(ctk.CTkFrame):
         if success:
             self.update_table(data.tmp_list)
 
+    def validate_buttons(self):
+        SELECTED_COLOR = "#1f6aa5"
+        for btn in self.rank_buttons:
+            is_selected = any(acc['username'] == btn.username and 
+                                acc['role'] == btn.player_role 
+                                for acc in data.selected_accounts)
+            if is_selected:
+                btn.configure(state="normal", fg_color=SELECTED_COLOR)
+                continue
+        
+            owner_ok = process.can_add_owner(btn.player_owner)
+            role_ok = process.can_add_role(btn.player_role)
+            rank_ok = True
+
+            if data.selected_accounts:
+                idx = process.get_rank_index(btn.player_rank)
+                rank_ok = (process.global_min_idx <= idx <= process.global_max_idx)
+
+            if not (owner_ok and role_ok and rank_ok):
+                btn.configure(state="disabled", fg_color="#461010") # Dark gray
+
+            else:
+                btn.configure(state="normal", fg_color=btn.original_color)
+
+    def process_and_check (self, username, owner, role, fullrank):
+        success = process.handle_add_squad(username, owner, role, fullrank)
+        if success:
+            self.validate_buttons()
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
