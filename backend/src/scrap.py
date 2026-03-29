@@ -98,10 +98,10 @@ async def scrap_roles(battletag):
         "damage_division": 'N/A',
         "support": "Unranked",
         "support_division": 'N/A',
-        "owner": "N/A",
-        "date_refreshed": date_refreshed,
         "open_queue": "Unranked",
-        "open_queue_division": 'N/A'
+        "open_queue_division": 'N/A',
+        "owner": "N/A",
+        "date_refreshed": date_refreshed
         }
         return player_data
     else:

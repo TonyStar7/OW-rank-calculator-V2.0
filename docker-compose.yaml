@@ -1,0 +1,15 @@
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    image: backend:latest
+    container_name: backend_ow
+    ports: 
+      - 8000:8000
+
+    volumes:
+      - ./data:/app/data
+    
+    stdin_open: true
+    tty: true

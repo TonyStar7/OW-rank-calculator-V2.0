@@ -1,11 +1,13 @@
 from async_tkinter_loop import async_mainloop
-from backend.src.scrap import *
+import sys 
+import os
+
+BACKEND_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(BACKEND_DIR)
+sys.path.append(PROJECT_ROOT)
+
 from frontend.gui import App
 
-
 if __name__ == "__main__":
-    try:
-        app = App()
-        async_mainloop(app)
-    except Exception as e:
-        print(f"ERROR: {e}")
+    app = App()
+    async_mainloop(app)

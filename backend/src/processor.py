@@ -1,6 +1,25 @@
 from . import scrap as scraper
 from . import player_list as data
-from .import connect_database as db
+from . import connect_database as db
+import asyncio
+
+def load_players():
+    db_players = db.get_all_players()
+    data.data_list.clear()
+    data.tmp_list.clear()
+    for player in db_players:
+        player_data = {
+            "tag": player[1],
+            "username": player[2],
+            "tank": player[3] + player[4],
+            "damage": player[5] + player[6],
+            "support": player[7] + player[8],
+            "open_queue": player[9] + player[10],
+            "owner": player[11],
+            "date_refreshed": player[12]
+        }
+        data.data_list.append(player_data)
+        data.tmp_list.append(player_data)
 
 async def add_player(battletag):    
     player_data = await scraper.scrap_roles(battletag)
@@ -27,32 +46,40 @@ async def add_player(battletag):
     print(f"Failed to retrieve data for {battletag}.")
     return False
 
-
+def update_list(player_data):
+    for i, p in enumerate(data.data_list):
+        if p["tag"] == player_data["tag"]:
+            # Match by tag
+            updated_player = {
+                "tag": player_data["tag"],
+                "username": player_data["username"],
+                "tank": player_data["tank"] + player_data["tank_division"],
+                "damage": player_data["damage"] + player_data["damage_division"],
+                "support": player_data["support"] + player_data["support_division"],
+                "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
+                "owner": player_data["owner"],
+                "date_refreshed": player_data["date_refreshed"]
+            }
+            data.data_list[i] = updated_player
+            data.tmp_list[i] = updated_player
+            
 async def refresh_players(player=None):
     to_refresh = [player] if player else data.data_list
     if not to_refresh:
         return False
+    tasks = []
     for player in to_refresh:
         battletag = f"{player['username']}{player['tag']}"
-        player_data = await scraper.scrap_roles(battletag)
+        tasks.append(scraper.scrap_roles(battletag))
 
+    results = await asyncio.gather(*tasks)
+
+    for i, player_data in enumerate(results):
         if player_data is not None:
-            player_data["owner"] = player["owner"]
+            original_player = to_refresh[i]
+            player_data["owner"] = original_player["owner"]
             db.update_player(player_data) # updates db
-            for i, p in enumerate(data.data_list): # updates data
-                if p["tag"] == player_data["tag"]:
-                    # Match by tag
-                    updated_player = {
-                        "tag": player_data["tag"],
-                        "username": player_data["username"],
-                        "tank": player_data["tank"] + player_data["tank_division"],
-                        "damage": player_data["damage"] + player_data["damage_division"],
-                        "support": player_data["support"] + player_data["support_division"],
-                        "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
-                        "owner": p["owner"],
-                        "date_refreshed": player_data["date_refreshed"] 
-                        }
-                    data.tmp_list[i] = data.data_list[i] = updated_player
+            update_list(player_data) # updates list
     return True
 
 def delete_player(tag):

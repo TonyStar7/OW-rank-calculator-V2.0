@@ -94,7 +94,7 @@ class Left_Frame(ctk.CTkFrame):
             if success:
                 self.master.player_list.update_table(data.tmp_list)
                 self.status_label.configure(text="Player added", text_color="#20c11a")
-                self.after(3000, lambda: self.status_label.configure(text=""))
+                self.after(6000, lambda: self.status_label.configure(text=""))
             else:
                 self.status_label.configure(text="Player not found", text_color="red")
                 
@@ -130,7 +130,7 @@ class Right_Frame(ctk.CTkFrame):
         if success:
             self.master.player_list.update_table(data.tmp_list)
             self.status_label.configure(text="Players refreshed", text_color="#20c11a")
-            self.after(3000, lambda: self.status_label.configure(text=""))
+            self.after(6000, lambda: self.status_label.configure(text=""))
         else:
             self.status_label.configure(text="Players not refreshed", text_color="red")
         self.refresh_button.configure(state="normal", text="Refresh")
@@ -362,6 +362,7 @@ class Player_list_Frame(ctk.CTkFrame):
         success = await process.refresh_players(player=player_dict)
         if success:
             self.update_table(data.tmp_list)
+            self.validate_buttons()
 
     def validate_buttons(self):
         SELECTED_COLOR = "#1f6aa5"
@@ -376,12 +377,13 @@ class Player_list_Frame(ctk.CTkFrame):
             owner_ok = process.can_add_owner(btn.player_owner)
             role_ok = process.can_add_role(btn.player_role)
             rank_ok = True
+            is_unranked = "Unranked" in btn.player_rank
 
             if data.selected_accounts:
                 idx = process.get_rank_index(btn.player_rank)
                 rank_ok = (process.global_min_idx <= idx <= process.global_max_idx)
 
-            if not (owner_ok and role_ok and rank_ok):
+            if not (owner_ok and role_ok and rank_ok and not is_unranked):
                 btn.configure(state="disabled", fg_color="#461010") # Dark gray
 
             else:
@@ -395,23 +397,7 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        db_players = db.get_all_players()
-        data.data_list.clear()
-        data.tmp_list.clear()
-        for player in db_players:
-            player_data = {
-                "tag": player[1],
-                "username": player[2],
-                "tank": player[3] + player[4],
-                "damage": player[5] + player[6],
-                "support": player[7] + player[8],
-                "open_queue": player[9] + player[10],
-                "owner": player[11],
-                "date_refreshed": player[12]
-            }
-            print(f"Adding player {player[0]}{player[1]} from db to dl")
-            data.data_list.append(player_data)
-            data.tmp_list.append(player_data)
+        process.load_players()
 
         # Top row: controls (add/refresh)
         self.grid_rowconfigure(0, weight=1)

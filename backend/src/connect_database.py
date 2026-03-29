@@ -1,12 +1,19 @@
 import sqlite3
 import os
 
-SRC_DIR = os.path.dirname(os.path.abspath(__file__))
-BACKEND_DIR = os.path.dirname(SRC_DIR)
-PAR_DIR = os.path.dirname(BACKEND_DIR)
+IS_DOCKER = os.path.exists('/.dockerenv')
 
-connection = sqlite3.connect(os.path.join(PAR_DIR, "data", "database.db"))
+if IS_DOCKER:
+    # Use the absolute path we defined in docker-compose
+    DB_PATH = "/app/data/database.db"
+else:
+    # Use your original breadcrumb logic for local Windows testing
+    SRC_DIR = os.path.dirname(os.path.abspath(__file__))
+    BACKEND_DIR = os.path.dirname(SRC_DIR)
+    PAR_DIR = os.path.dirname(BACKEND_DIR)
+    DB_PATH = os.path.join(PAR_DIR, "data", "database.db")
 
+connection = sqlite3.connect(DB_PATH)
 cursor = connection.cursor()
 
 def create_player_table ():
