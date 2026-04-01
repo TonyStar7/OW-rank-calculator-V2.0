@@ -156,6 +156,7 @@ class Player_list_Frame(ctk.CTkFrame):
             "OQ": "open_queue"
         }
         self.rank_buttons = []
+        self.unranked_labels = []
 
         for i in range(len(self.categories)): #Categories row
             if self.categories[i] == "Delete": #delete button column
@@ -215,6 +216,7 @@ class Player_list_Frame(ctk.CTkFrame):
         alt_bgcolor = "#303030"
         # Clear existing player rows (except header)
         self.rank_buttons = []
+        self.unranked_labels = []
         self.remove_player_rows()
 
         # Drawing rows
@@ -328,17 +330,32 @@ class Player_list_Frame(ctk.CTkFrame):
 
             rank_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
         else:
-            unranked_label = ctk.CTkLabel(self, 
+            unranked_btn = ctk.CTkButton(self, 
                                 text=display_text,
                                 font=ctk.CTkFont(size=14, weight="bold"), 
                                 fg_color=row_color, 
                                 corner_radius=0, 
                                 height=self.widget_height,
+                                state="disabled"
                                 )
-            unranked_label.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
+            unranked_btn.player_owner = player_dict["owner"]
+            unranked_btn.player_role = role
+            unranked_btn.player_rank = "Unranked"
+            unranked_btn.username = player_dict["username"]
+            unranked_btn.original_color = row_color
+
+            self.rank_buttons.append(unranked_btn)
+            unranked_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
     def create_label(self, row_idx, col_idx, text, row_color):
-        lbl = ctk.CTkLabel(self, text=str(text), font=ctk.CTkFont(size=14, weight="bold"), fg_color=row_color, corner_radius=0, height=self.widget_height)
+        lbl = ctk.CTkLabel(self, 
+                            text=str(text), 
+                            font=ctk.CTkFont(size=14, weight="bold"), 
+                            fg_color=row_color, 
+                            corner_radius=0, 
+                            height=self.widget_height)
+        if "Unranked" in text:
+            self.unranked_labels.append(lbl)
         lbl.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
     def create_datebutton(self, row_idx, col_idx, date_text, row_color, player_dict):
@@ -366,6 +383,7 @@ class Player_list_Frame(ctk.CTkFrame):
 
     def validate_buttons(self):
         SELECTED_COLOR = "#1f6aa5"
+        DISABLED_RED = "#461010"
         for btn in self.rank_buttons:
             is_selected = any(acc['username'] == btn.username and 
                                 acc['role'] == btn.player_role 
@@ -384,8 +402,10 @@ class Player_list_Frame(ctk.CTkFrame):
                 rank_ok = (process.global_min_idx <= idx <= process.global_max_idx)
 
             if not (owner_ok and role_ok and rank_ok and not is_unranked):
-                btn.configure(state="disabled", fg_color="#461010") # Dark gray
-
+                if data.selected_accounts:
+                    btn.configure(state="disabled", fg_color=DISABLED_RED) # Dark gray
+                else:
+                    btn.configure(state="disabled", fg_color=btn.original_color)
             else:
                 btn.configure(state="normal", fg_color=btn.original_color)
 
