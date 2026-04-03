@@ -2,6 +2,7 @@ from . import scrap as scraper
 from . import player_list as data
 from . import connect_database as db
 import asyncio
+from datetime import datetime
 
 def load_players():
     db_players = db.get_all_players()
@@ -90,6 +91,26 @@ def delete_player(tag):
     
     print(f"Successfully deleted player with tag {tag} from database!")
     return True
+
+def time_ago(refreshed_date):
+    if not refreshed_date or refreshed_date == "N/A":
+        return "N/A"
+    else:
+        try:
+            date = datetime.strptime(refreshed_date, "%d/%m/%Y %H:%M")
+            now = datetime.now()
+            diff = now - date
+            minutes = int(diff.total_seconds() / 60)
+
+            if minutes < 1: return "Just now"
+            if minutes < 60: return f"{minutes} minutes ago"
+            hours = minutes / 60
+            if hours < 24: return f"{int(hours)} hours ago"
+            days = hours / 24
+            return f"{int(days)} days ago"
+        except Exception as e:
+            print(f"Time Error: {e}")
+            return "Error"
 
 Ranks_list = ["Bronze5", "Bronze4", "Bronze3", "Bronze2", "Bronze1", 
                 "Silver5", "Silver4", "Silver3", "Silver2", "Silver1", 

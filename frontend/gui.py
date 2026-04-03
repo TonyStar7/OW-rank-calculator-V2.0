@@ -157,6 +157,7 @@ class Player_list_Frame(ctk.CTkFrame):
         }
         self.rank_buttons = []
         self.unranked_labels = []
+        self.time_labels = []
 
         for i in range(len(self.categories)): #Categories row
             if self.categories[i] == "Delete": #delete button column
@@ -235,15 +236,17 @@ class Player_list_Frame(ctk.CTkFrame):
             role_fields = ["tank", "damage", "support", "open_queue"]
 
             for col_idx, field in enumerate(fields, start=1):
-                rank_text = player_dict.get(field, "")  #gets the rank from the role
+                text = player_dict.get(field, "")  #gets the rank from the role
                 #if role columns, make btn
                 if field in role_fields:   #just gets the role (field)
-                    self.create_rank_button(row_idx, col_idx, rank_text, row_color, player_dict, field)
+                    self.create_rank_button(row_idx, col_idx, text, row_color, player_dict, field)
                 elif field == "date_refreshed":
-                    self.create_datebutton(row_idx, col_idx, rank_text, row_color, player_dict)
+                    self.create_datebutton(row_idx, col_idx, row_color, player_dict)
                 else:
                     #if not role column, make label
-                    self.create_label(row_idx, col_idx, rank_text, row_color)
+                    self.create_label(row_idx, col_idx, text, row_color)
+
+        self.update_all_times()
         return True        
 
     def handle_delete(self, tag):
@@ -358,14 +361,17 @@ class Player_list_Frame(ctk.CTkFrame):
             self.unranked_labels.append(lbl)
         lbl.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
-    def create_datebutton(self, row_idx, col_idx, date_text, row_color, player_dict):
+    def create_datebutton(self, row_idx, col_idx, row_color, player_dict):
+        time_ago_display = process.time_ago(player_dict["date_refreshed"])
         self.date_btn = ctk.CTkButton(self, 
-                            text=str(date_text), 
+                            text=str(time_ago_display), 
                             font=ctk.CTkFont(size=14, weight="bold"), 
                             fg_color=row_color, 
                             corner_radius=0, 
                             height=self.widget_height,
                             command= async_handler(lambda p=player_dict, b=None: self.on_refresh_single_click(p, b)))
+        self.date_btn.original_time = player_dict["date_refreshed"]
+        self.time_labels.append(self.date_btn)
         self.date_btn.configure(command=async_handler(lambda p=player_dict, b=self.date_btn: self.on_refresh_single_click(p, b)))
         self.date_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
@@ -413,6 +419,14 @@ class Player_list_Frame(ctk.CTkFrame):
         success = process.handle_add_squad(username, owner, role, fullrank)
         if success:
             self.validate_buttons()
+
+    def update_all_times(self):
+        for lbl in self.time_labels:
+            new_text = process.time_ago(lbl.original_time)
+            lbl.configure(text=new_text)
+
+        self.after(60000, self.update_all_times)
+
 class App(ctk.CTk):
     def __init__(self):
         super().__init__()
