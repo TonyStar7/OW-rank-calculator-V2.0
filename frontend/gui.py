@@ -1,4 +1,5 @@
 from tkinter import messagebox
+from tkinter.simpledialog import askstring
 
 import customtkinter as ctk
 from PIL import Image
@@ -87,9 +88,17 @@ class Left_Frame(ctk.CTkFrame):
     async def on_add_click(self):
         battletag = self.add_entry.get()
         if battletag != self.default_text and battletag.strip():
-            self.add_button.configure(state="disabled", text="Searching...")
             
-            success = await process.add_player(battletag)
+            owner_box = askstring("Owner", "Enter player's owner. Leave empty if none \t\t", initialvalue=None)
+            if owner_box is None:
+                print("Owner cancelled")
+                return
+            
+            if owner_box.strip() == "":
+                owner_box = "N/A"
+
+            self.add_button.configure(state="disabled", text="Searching...")
+            success = await process.add_player(battletag, owner_box)
 
             if success:
                 self.master.player_list.update_table(data.tmp_list)
@@ -98,7 +107,6 @@ class Left_Frame(ctk.CTkFrame):
             else:
                 self.status_label.configure(text="Player not found", text_color="red")
                 
-            
             self.add_button.configure(state="normal", text="Add player")
             self.battletag_var.set(self.default_text)
             self.add_entry.configure(text_color="#9c9c9c")
@@ -215,9 +223,11 @@ class Player_list_Frame(ctk.CTkFrame):
     def update_table(self, list): #redraw table, updates table with data_list
         bg_color = "#2b2b2b"
         alt_bgcolor = "#303030"
-        # Clear existing player rows (except header)
-        self.rank_buttons = []
-        self.unranked_labels = []
+
+        # Clear
+        self.rank_buttons.clear()
+        self.unranked_labels.clear()
+        self.time_labels.clear()
         self.remove_player_rows()
 
         # Drawing rows
@@ -246,7 +256,6 @@ class Player_list_Frame(ctk.CTkFrame):
                     #if not role column, make label
                     self.create_label(row_idx, col_idx, text, row_color)
 
-        self.update_all_times()
         return True        
 
     def handle_delete(self, tag):
@@ -255,6 +264,7 @@ class Player_list_Frame(ctk.CTkFrame):
         if confirm_pop == "yes":
             process.delete_player(tag)
             self.update_table(data.tmp_list)
+
 
     def remove_player_rows(self):
         for child in self.winfo_children():
@@ -421,11 +431,21 @@ class Player_list_Frame(ctk.CTkFrame):
             self.validate_buttons()
 
     def update_all_times(self):
-        for lbl in self.time_labels:
-            new_text = process.time_ago(lbl.original_time)
-            lbl.configure(text=new_text)
+        for lbl in self.time_labels[:]:
+            try:
+                if lbl.winfo_exists():
+                    new_text = process.time_ago(lbl.original_time)
+                    if lbl.cget("text") != new_text:
+                        lbl.configure(text=new_text)
+                else:
+                    self.time_labels.remove(lbl)
+            except Exception as e:
+                continue
+        self.time_update_id = self.after(60000, self.update_all_times)
 
-        self.after(60000, self.update_all_times)
+    def stop_timer(self):
+        if self.time_update_id:
+            self.after_cancel(self.time_update_id)
 
 class App(ctk.CTk):
     def __init__(self):
@@ -461,7 +481,16 @@ class App(ctk.CTk):
 
         self.player_list.update_table(data.data_list)   #init with real list first
 
-            
+        self.player_list.update_all_times()
+
         self.deiconify()     # Un-minimize the window if it starts minimized
+
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+    def on_closing(self):
+        self.player_list.stop_timer()
+        self.withdraw()
+        self.quit()
+        self.destroy()
 
 

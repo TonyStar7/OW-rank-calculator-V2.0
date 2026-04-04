@@ -22,9 +22,13 @@ def load_players():
         data.data_list.append(player_data)
         data.tmp_list.append(player_data)
 
-async def add_player(battletag):    
+async def add_player(battletag, owner=None):    
     player_data = await scraper.scrap_roles(battletag)
     if player_data is not None:
+        if owner is None:
+            player_owner = "N/A"
+        else:
+            player_owner = owner
         print("adding player to database...")
         added = db.add_player(player_data)
         if added:
@@ -35,7 +39,7 @@ async def add_player(battletag):
                 "damage": player_data["damage"] + player_data["damage_division"],
                 "support": player_data["support"] + player_data["support_division"],
                 "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
-                "owner": player_data["owner"],
+                "owner": player_owner,
                 "date_refreshed": player_data["date_refreshed"]
             }
             data.data_list.append(formatted_player)
