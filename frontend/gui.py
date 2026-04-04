@@ -265,25 +265,7 @@ class Player_list_Frame(ctk.CTkFrame):
             process.delete_player(tag)
             self.update_table(data.tmp_list)
 
-
-    def remove_player_rows(self):
-        for child in self.winfo_children():
-            if int(child.grid_info()["row"]) > 0:
-                child.destroy()
-
-    def create_delete_button(self, row_idx, player_dict, row_color):
-        del_btn = ctk.CTkButton(
-                self, text="", 
-                image=ctk.CTkImage(light_image=Image.open(CROSS_IMG_PATH), size=(20, 20)),
-                width=30, fg_color=row_color, hover_color="red",
-                command=lambda t=player_dict["tag"]: self.handle_delete(t),
-                height=self.widget_height,
-                corner_radius=0,
-                cursor="hand2"
-            )
-        del_btn.grid(row=row_idx, column=0, padx=0, pady=0, sticky="nsew")
-
-    def create_rank_button(self, row_idx, col_idx, rank_text, row_color, player_dict, role):
+    def calculate_img_ratio(self, rank):
         game_ranks = {
             "Silver": SILVER_IMG,
             "Gold": GOLD_IMG,
@@ -292,14 +274,6 @@ class Player_list_Frame(ctk.CTkFrame):
             "Master": MASTER_IMG,
             "Grandmaster": GRANDMASTER_IMG,
         }
-        display_text = str(rank_text).replace("N/A", "").strip() #Unranked case
-        if display_text != "Unranked":
-            rank = re.findall("[a-zA-Z]+", display_text)[0]
-            division_list = re.findall("[0-9]+", display_text)
-            division = division_list[0] if len(division_list) > 0 else ""
-        else:
-            rank = "Unranked"
-
         found_key = None
         for key in game_ranks:
             if key == rank:
@@ -319,15 +293,67 @@ class Player_list_Frame(ctk.CTkFrame):
                 target_width = int(calculated_height * (orig_w / orig_h))
 
             img_path = game_ranks[found_key]
+        return img_path, calculated_height, target_width
+
+    def get_arrow(self, diff):
+        arrow = ""
+        arrow_color = "white"
+        if diff == "up":
+            arrow = "▲"
+            arrow_color = "green"
+        elif diff == "down":
+            arrow = "▼"
+            arrow_color = "red"
+        return arrow, arrow_color
+
+    def get_display_text(self, rank_text):
+        display_text = str(rank_text).replace("N/A", "").strip() #Unranked case
+        if display_text != "Unranked":
+            rank = re.findall("[a-zA-Z]+", display_text)[0]
+            division_list = re.findall("[0-9]+", display_text)
+            division = division_list[0] if len(division_list) > 0 else ""
+        else:
+            rank = "Unranked"
+            division = ""
+
+        return rank, division, display_text
+    
+    def remove_player_rows(self):
+        for child in self.winfo_children():
+            if int(child.grid_info()["row"]) > 0:
+                child.destroy()
+
+    def create_delete_button(self, row_idx, player_dict, row_color):
+        del_btn = ctk.CTkButton(
+                self, text="", 
+                image=ctk.CTkImage(light_image=Image.open(CROSS_IMG_PATH), size=(20, 20)),
+                width=30, fg_color=row_color, hover_color="red",
+                command=lambda t=player_dict["tag"]: self.handle_delete(t),
+                height=self.widget_height,
+                corner_radius=0,
+                cursor="hand2"
+            )
+        del_btn.grid(row=row_idx, column=0, padx=0, pady=0, sticky="nsew")
+
+    def create_rank_button(self, row_idx, col_idx, rank_text, row_color, player_dict, role):
+        rank, division, display_text = self.get_display_text(rank_text)
+        
+        if rank != "Unranked":
+            img_path, calculated_height, target_width = self.calculate_img_ratio(rank)
             full_rank = f"{rank}{division}"
             username = player_dict["username"]
             owner = player_dict["owner"]
 
+            diff = player_dict.get(f"{role}_diff", "same")
+            arrow, arrow_color = self.get_arrow(diff)
+            button_text = f"{division:>1} {arrow}"
+
             rank_btn = ctk.CTkButton(self, 
-                                text=division,
+                                text=button_text,
+                                text_color=arrow_color if arrow else "white",
                                 image=ctk.CTkImage(light_image=Image.open(img_path), dark_image=Image.open(img_path), size=(target_width, calculated_height)),
-                                font=ctk.CTkFont(size=font_size, weight="bold"), 
-                                fg_color=row_color, 
+                                font=ctk.CTkFont(family="Consolas", size=font_size, weight="bold"), 
+                                fg_color=row_color,
                                 corner_radius=0, 
                                 height=self.widget_height,
                                 cursor="hand2",

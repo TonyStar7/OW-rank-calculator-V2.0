@@ -82,6 +82,18 @@ async def refresh_players(player=None):
     for i, player_data in enumerate(results):
         if player_data is not None:
             original_player = to_refresh[i]
+            roles = ["Tank", "Damage", "Support", "Open Queue"]
+            for role in roles:
+                old_rank = original_player.get(role, "Unranked")
+                new_rank = player_data.get(role, "Unranked")
+
+                if old_rank == new_rank:
+                    player_data[f"{role}_diff"] =  original_player.get(f"{role}_diff", "same")
+                elif rank_is_better(old_rank, new_rank):
+                    player_data[f"{role}_diff"] = "up"
+                else:
+                    player_data[f"{role}_diff"] = "down"
+
             player_data["owner"] = original_player["owner"]
             db.update_player(player_data) # updates db
             update_list(player_data) # updates list
@@ -107,9 +119,9 @@ def time_ago(refreshed_date):
             minutes = int(diff.total_seconds() / 60)
 
             if minutes < 1: return "Just now"
-            if minutes < 60: return f"{minutes} minutes ago"
+            if minutes < 60: return f"{minutes} min ago"
             hours = minutes / 60
-            if hours < 24: return f"{int(hours)} hours ago"
+            if hours < 24: return f"{int(hours)}h ago"
             days = hours / 24
             return f"{int(days)} days ago"
         except Exception as e:
@@ -276,6 +288,10 @@ def sort_by_role(role):
     is_rank_col = role in ["tank", "damage", "support", "open_queue"]
     data.tmp_list.sort(key=get_sort_value, reverse=is_rank_col)
 
+def rank_is_better(old_rank, new_rank):
+    oldrank_idx = get_rank_index(old_rank)
+    newrank_idx = get_rank_index(new_rank)
+    return oldrank_idx < newrank_idx
 
 def test():
     while len(data.selected_accounts) < 5:
