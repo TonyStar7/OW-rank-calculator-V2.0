@@ -100,6 +100,10 @@ async def scrap_roles(battletag):
         "support_division": 'N/A',
         "open_queue": "Unranked",
         "open_queue_division": 'N/A',
+        "tank_diff": 'same',
+        "damage_diff": 'same',
+        "support_diff": 'same',
+        "open_queue_diff": 'same',
         "owner": "N/A",
         "date_refreshed": date_refreshed
         }
@@ -130,10 +134,14 @@ async def scrap_roles(battletag):
         "damage_division": damage_division,
         "support": support,
         "support_division": support_division,
+        "open_queue": open_queue,
+        "open_queue_division": open_queue_division,
+        "tank_diff": 'same',
+        "damage_diff": 'same',
+        "support_diff": 'same',
+        "open_queue_diff": 'same',
         "owner": "N/A",
         "date_refreshed": date_refreshed,
-        "open_queue": open_queue,
-        "open_queue_division": open_queue_division
     }
 
     return player_data

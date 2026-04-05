@@ -112,7 +112,6 @@ class Left_Frame(ctk.CTkFrame):
             self.add_entry.configure(text_color="#9c9c9c")
             self.focus()
 
-
 class Right_Frame(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)

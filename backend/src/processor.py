@@ -39,6 +39,10 @@ async def add_player(battletag, owner=None):
                 "damage": player_data["damage"] + player_data["damage_division"],
                 "support": player_data["support"] + player_data["support_division"],
                 "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
+                "tank_diff": 'same',
+                "damage_diff": 'same',
+                "support_diff": 'same',
+                "open_queue_diff": 'same',
                 "owner": player_owner,
                 "date_refreshed": player_data["date_refreshed"]
             }
@@ -62,8 +66,13 @@ def update_list(player_data):
                 "damage": player_data["damage"] + player_data["damage_division"],
                 "support": player_data["support"] + player_data["support_division"],
                 "open_queue": player_data["open_queue"] + player_data["open_queue_division"],
+                "tank_diff": player_data.get("tank_diff", "same"),
+                "damage_diff": player_data.get("damage_diff", "same"),
+                "support_diff": player_data.get("support_diff", "same"),
+                "open_queue_diff": player_data.get("open_queue_diff", "same"),
                 "owner": player_data["owner"],
-                "date_refreshed": player_data["date_refreshed"]
+                "date_refreshed": player_data["date_refreshed"],
+                
             }
             data.data_list[i] = updated_player
             data.tmp_list[i] = updated_player
@@ -82,10 +91,17 @@ async def refresh_players(player=None):
     for i, player_data in enumerate(results):
         if player_data is not None:
             original_player = to_refresh[i]
-            roles = ["Tank", "Damage", "Support", "Open Queue"]
+            roles = ["tank", "damage", "support", "open_queue"]
+
             for role in roles:
                 old_rank = original_player.get(role, "Unranked")
-                new_rank = player_data.get(role, "Unranked")
+                new_rank_base = player_data.get(role, "Unranked")
+                new_rank_div = player_data.get(f"{role}_division", "")
+
+                if new_rank_base == "Unranked" or new_rank_div == "N/A":
+                    new_rank = "Unranked"
+                else:
+                    new_rank = f"{new_rank_base}{new_rank_div}"
 
                 if old_rank == new_rank:
                     player_data[f"{role}_diff"] =  original_player.get(f"{role}_diff", "same")
@@ -292,10 +308,4 @@ def rank_is_better(old_rank, new_rank):
     oldrank_idx = get_rank_index(old_rank)
     newrank_idx = get_rank_index(new_rank)
     return oldrank_idx < newrank_idx
-
-def test():
-    while len(data.selected_accounts) < 5:
-        rank = input("Rank?\n")
-        add_squad(rank)
-        print(data.selected_accounts)
 
