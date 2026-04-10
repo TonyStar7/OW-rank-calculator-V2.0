@@ -76,6 +76,7 @@ def update_list(player_data):
             }
             data.data_list[i] = updated_player
             data.tmp_list[i] = updated_player
+            return
             
 async def refresh_players(player=None):
     to_refresh = [player] if player else data.data_list
