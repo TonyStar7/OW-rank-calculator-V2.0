@@ -24,12 +24,10 @@ def load_players():
 
 async def add_player(battletag, owner=None):    
     player_data = await scraper.scrap_roles(battletag)
+
     if player_data is not None:
-        if owner is None:
-            player_owner = "N/A"
-        else:
-            player_owner = owner
-        print("adding player to database...")
+        player_data["owner"] = owner if owner else "N/A"
+        print(f"adding player {battletag} to database...")
         added = db.add_player(player_data)
         if added:
             formatted_player = {
@@ -43,7 +41,7 @@ async def add_player(battletag, owner=None):
                 "damage_diff": 'same',
                 "support_diff": 'same',
                 "open_queue_diff": 'same',
-                "owner": player_owner,
+                "owner": player_data["owner"],
                 "date_refreshed": player_data["date_refreshed"]
             }
             data.data_list.append(formatted_player)
@@ -111,9 +109,25 @@ async def refresh_players(player=None):
                 else:
                     player_data[f"{role}_diff"] = "down"
 
-            player_data["owner"] = original_player["owner"]
+            player_data["owner"] = original_player.get("owner", "N/A")
             db.update_player(player_data) # updates db
             update_list(player_data) # updates list
+    return True
+
+def update_owner(tag, new_owner):
+    sql = 'UPDATE players SET owner=? WHERE tag=?'
+    db.cursor.execute(sql, (new_owner, tag))
+    db.connection.commit()
+
+    for player in data.data_list:
+        if player["tag"] == tag:
+            player["owner"] = new_owner
+
+    for player in data.tmp_list:
+        if player["tag"] == tag:
+            player["owner"] = new_owner
+    
+    print(f"Owner update to {new_owner} for player with tag {tag}")
     return True
 
 def delete_player(tag):
@@ -285,8 +299,6 @@ def handle_add_squad(username, owner, role, rank):
             "rank": rank
         })
         print(f"Successfully added {username} {role} {rank} to the squad")
-        print(data.role_list)
-        print(data.owner_list)
         return True
     return False
 

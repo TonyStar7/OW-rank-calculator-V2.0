@@ -1,11 +1,17 @@
 import sqlite3
 import os
+import sys
 
 IS_DOCKER = os.path.exists('/.dockerenv')
 
 if IS_DOCKER:
     # Use the absolute path we defined in docker-compose
     DB_PATH = "/app/data/database.db"
+
+elif getattr(sys, 'frozen', False):
+    # Running as a bundled .exe
+    BASE_DIR = os.path.dirname(sys.executable)
+    DB_PATH = os.path.join(BASE_DIR, "database.db")
 else:
     # Use your original breadcrumb logic for local Windows testing
     SRC_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -63,7 +69,7 @@ def delete_player(tag):
     connection.commit()
 
 def update_player(player_data):
-    sql = 'UPDATE players SET username=?, tank=?, tank_division=?, damage=?, damage_division=?, support=?, support_division=?, open_queue=?, open_queue_division=?, date_refreshed=? WHERE tag=?'
+    sql = 'UPDATE players SET username=?, tank=?, tank_division=?, damage=?, damage_division=?, support=?, support_division=?, open_queue=?, open_queue_division=?, owner=?, date_refreshed=? WHERE tag=?'
     cursor.execute(sql, (
         player_data["username"],
         player_data.get("tank", "Unranked"),
@@ -74,6 +80,7 @@ def update_player(player_data):
         player_data.get("support_division", "N/A"),
         player_data.get("open_queue", "Unranked"),
         player_data.get("open_queue_division", "N/A"),
+        player_data.get("owner", "N/A"),
         player_data["date_refreshed"],
         player_data["tag"]
     ))

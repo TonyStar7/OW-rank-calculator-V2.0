@@ -21,19 +21,26 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAR_DIR = os.path.dirname(FILE_DIR)
 IMG_DIR = os.path.join(PAR_DIR, "frontend", "assets")
 
-CROSS_IMG_PATH = os.path.join(IMG_DIR, "red_cross.png")
-TANK_IMG = os.path.join(IMG_DIR, "Tank_icon.png")
-DPS_IMG = os.path.join(IMG_DIR, "Damage_icon.png")
-SUPPORT_IMG = os.path.join(IMG_DIR, "Support_icon.png")
-OPEN_QUEUE_IMG = os.path.join(IMG_DIR, "Open_Queue_icon.png")
+def resource_path(relative_path):
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = PROJECT_ROOT
+    return os.path.join(base_path, relative_path)
 
-BRONZE_IMG = os.path.join(IMG_DIR, "Bronze_icon.png")
-SILVER_IMG = os.path.join(IMG_DIR, "Silver_icon.png")    
-GOLD_IMG = os.path.join(IMG_DIR, "Gold_icon.png")
-PLATINUM_IMG = os.path.join(IMG_DIR, "Platinum_icon.png")
-DIAMOND_IMG = os.path.join(IMG_DIR, "Diamond_icon.png")
-MASTER_IMG = os.path.join(IMG_DIR, "Master_icon.png")
-GRANDMASTER_IMG = os.path.join(IMG_DIR, "Grandmaster_icon.png")
+CROSS_IMG_PATH = resource_path("frontend/assets/red_cross.png")
+TANK_IMG       = resource_path("frontend/assets/Tank_icon.png")
+DPS_IMG        = resource_path("frontend/assets/Damage_icon.png")
+SUPPORT_IMG    = resource_path("frontend/assets/Support_icon.png")
+OPEN_QUEUE_IMG = resource_path("frontend/assets/Open_Queue_icon.png")
+
+BRONZE_IMG      = resource_path("frontend/assets/Bronze_icon.png")
+SILVER_IMG      = resource_path("frontend/assets/Silver_icon.png")    
+GOLD_IMG        = resource_path("frontend/assets/Gold_icon.png")
+PLATINUM_IMG    = resource_path("frontend/assets/Platinum_icon.png")
+DIAMOND_IMG     = resource_path("frontend/assets/Diamond_icon.png")
+MASTER_IMG      = resource_path("frontend/assets/Master_icon.png")
+GRANDMASTER_IMG = resource_path("frontend/assets/Grandmaster_icon.png")
 
 
 class Left_Frame(ctk.CTkFrame):
@@ -67,6 +74,7 @@ class Left_Frame(ctk.CTkFrame):
         self.status_label.grid(row=1, column=0, columnspan=2, padx=20, pady=(0, 20))
 
         self.bind("<Button-1>", self.drop_focus)
+        self.add_entry.bind("<Return>", async_handler(self.on_add_click))
         self.add_entry.bind("<FocusIn>", self.handle_focus_in)
         self.add_entry.bind("<FocusOut>", self.handle_focus_out)
 
@@ -85,7 +93,7 @@ class Left_Frame(ctk.CTkFrame):
             self.battletag_var.set(self.default_text)
             self.add_entry.configure(text_color="#9c9c9c")
 
-    async def on_add_click(self):
+    async def on_add_click(self, event=None):
         battletag = self.add_entry.get()
         if battletag != self.default_text and battletag.strip():
             
@@ -165,6 +173,8 @@ class Player_list_Frame(ctk.CTkFrame):
         self.rank_buttons = []
         self.unranked_labels = []
         self.time_labels = []
+
+        self.bind("<Button-1>", lambda e: self.focus_set())
 
         for i in range(len(self.categories)): #Categories row
             if self.categories[i] == "Delete": #delete button column
@@ -253,7 +263,7 @@ class Player_list_Frame(ctk.CTkFrame):
                     self.create_datebutton(row_idx, col_idx, row_color, player_dict)
                 else:
                     #if not role column, make label
-                    self.create_label(row_idx, col_idx, text, row_color)
+                    self.create_label(row_idx, col_idx, text, row_color, player_dict)
 
         return True        
 
@@ -385,16 +395,50 @@ class Player_list_Frame(ctk.CTkFrame):
             self.rank_buttons.append(unranked_btn)
             unranked_btn.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
-    def create_label(self, row_idx, col_idx, text, row_color):
-        lbl = ctk.CTkLabel(self, 
+    def create_label(self, row_idx, col_idx, text, row_color, player_dict=None):
+        if col_idx == 7 and player_dict:
+            cell_frame = ctk.CTkFrame(self, fg_color=row_color, corner_radius=0)
+            cell_frame.grid(row=row_idx, column=col_idx, sticky="nsew")
+
+            cell_frame.grid_columnconfigure(0, weight=1)
+            cell_frame.grid_columnconfigure(1, weight=0)
+            cell_frame.grid_columnconfigure(2, weight=1)
+
+            cell_frame.bind("<Button-1>", lambda e: self.focus_set())
+            # 2. Create the Entry
+            entry = ctk.CTkEntry(
+                cell_frame, 
+                font=ctk.CTkFont(size=14, weight="bold"),
+                fg_color=row_color,
+                text_color="white", 
+                border_width=0,
+                corner_radius=0,
+                height=self.widget_height,
+                justify="center"
+            )
+            entry.insert(0, str(text))
+            entry.configure(state="readonly")
+            entry.grid(row=0, column=1, sticky="nsew")
+
+            pencil_icon = ctk.CTkLabel(cell_frame, text="🖉", font=("Arial", 30), text_color="gray")
+            pencil_icon.grid(row=0, column=2, sticky="ns", pady=(0, 10))
+
+            pencil_icon.configure(cursor="hand2")
+            pencil_icon.bind("<Button-1>", lambda e: self.enable_edit_mode(entry))
+
+            entry.bind("<FocusOut>", lambda e, t=player_dict["tag"]: self.auto_save_owner(entry, t))
+            entry.bind("<Return>", lambda e, t=player_dict["tag"]: self.auto_save_owner(entry, t))
+        else:
+            lbl = ctk.CTkLabel(self, 
                             text=str(text), 
                             font=ctk.CTkFont(size=14, weight="bold"), 
                             fg_color=row_color, 
                             corner_radius=0, 
                             height=self.widget_height)
-        if "Unranked" in text:
-            self.unranked_labels.append(lbl)
-        lbl.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
+        
+            if "Unranked" in text:
+                self.unranked_labels.append(lbl)
+            lbl.grid(row=row_idx, column=col_idx, padx=0, pady=0, sticky="nsew")
 
     def create_datebutton(self, row_idx, col_idx, row_color, player_dict):
         time_ago_display = process.time_ago(player_dict["date_refreshed"])
@@ -421,6 +465,29 @@ class Player_list_Frame(ctk.CTkFrame):
         if success:
             self.update_table(data.tmp_list)
             self.validate_buttons()
+
+    def on_owner_click(self, battletag, owner):
+        new_owner = askstring("Owner", "Enter player's owner. Leave empty if none \t\t", initialvalue=owner)
+        if new_owner:
+            process.update_owner(battletag, new_owner)
+            self.update_table(data.tmp_list)
+            self.validate_buttons()
+
+    def auto_save_owner(self, entry_widget, tag):
+        new_name = entry_widget.get().strip()
+        if not new_name:
+            new_name = "N/A"
+            entry_widget.configure(state="normal")
+            entry_widget.delete(0, "end")
+            entry_widget.insert(0, new_name)
+
+        process.update_owner(tag, new_name)
+        entry_widget.configure(state="readonly", fg_color=entry_widget.master.cget("fg_color"))
+
+    def enable_edit_mode(self, entry_widget):
+        entry_widget.configure(state="normal", border_width=0)
+        entry_widget.focus_set()
+        entry_widget.icursor("end")
 
     def validate_buttons(self):
         SELECTED_COLOR = "#1f6aa5"
@@ -508,14 +575,23 @@ class App(ctk.CTk):
 
         self.player_list.update_all_times()
 
+        self.bind_all("<Button-1>", self.check_focus)
+
         self.deiconify()     # Un-minimize the window if it starts minimized
 
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+
     def on_closing(self):
         self.player_list.stop_timer()
         self.withdraw()
         self.quit()
         self.destroy()
 
-
+    def check_focus(self, event):
+        widget = event.widget
+        if widget:
+            w_str = str(widget).lower()
+            if ".!ctkentry" in w_str or "label" in w_str:
+                return              
+        self.focus_set()    
