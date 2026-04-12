@@ -252,6 +252,7 @@ class Player_list_Frame(ctk.CTkFrame):
         self.unranked_labels.clear()
         self.time_labels.clear()
         self.remove_player_rows()
+        self.update_idletasks()
 
         # Drawing rows
         for i, player_dict in enumerate(list):
