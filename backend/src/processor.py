@@ -1,6 +1,7 @@
 from . import scrap as scraper
 from . import player_list as data
 from . import connect_database as db
+from . import api as api
 import asyncio
 from datetime import datetime
 
@@ -52,6 +53,14 @@ async def add_player(battletag, owner=None):
         return True
     print(f"Failed to retrieve data for {battletag}.")
     return False
+
+async def add_player_flow(battletag, owner=None):
+    exists = await api.player_exists(battletag)
+    if not exists:
+        return False
+    
+    success = await add_player(battletag, owner)
+    return success
 
 def update_list(player_data):
     for i, p in enumerate(data.data_list):

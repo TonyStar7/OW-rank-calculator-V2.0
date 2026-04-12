@@ -16,3 +16,17 @@ async def get_player_data(battletag):
             print(f"success api for {battletag}")
             return text
     
+async def player_exists(battletag):
+    formatted_tag = battletag.replace("#", "-")
+    player_page = BASE_URL + formatted_tag
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(player_page) as response:
+            if response.status != 200:
+                return False
+            
+            html = await response.text()
+            if "Page not found" in html:
+                return False
+            
+            return True

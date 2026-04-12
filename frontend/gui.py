@@ -95,6 +95,12 @@ class Left_Frame(ctk.CTkFrame):
 
     async def on_add_click(self, event=None):
         battletag = self.add_entry.get()
+
+        if not self.check_valid_battletag(battletag):  #check battletag format
+            self.status_label.configure(text="Invalid battletag format", text_color="red")
+            self.status_label.after(1500, lambda: self.status_label.configure(text=""))
+            return
+        
         if battletag != self.default_text and battletag.strip():
             
             owner_box = askstring("Owner", "Enter player's owner. Leave empty if none \t\t", initialvalue=None)
@@ -106,7 +112,8 @@ class Left_Frame(ctk.CTkFrame):
                 owner_box = "N/A"
 
             self.add_button.configure(state="disabled", text="Searching...")
-            success = await process.add_player(battletag, owner_box)
+
+            success = await process.add_player_flow(battletag, owner_box)
 
             if success:
                 self.master.player_list.update_table(data.tmp_list)
@@ -114,12 +121,19 @@ class Left_Frame(ctk.CTkFrame):
                 self.after(6000, lambda: self.status_label.configure(text=""))
             else:
                 self.status_label.configure(text="Player not found", text_color="red")
+                self.status_label.after(2000, lambda: self.status_label.configure(text=""))
                 
             self.add_button.configure(state="normal", text="Add player")
             self.battletag_var.set(self.default_text)
             self.add_entry.configure(text_color="#9c9c9c")
             self.focus()
 
+    def check_valid_battletag(self, battletag):
+        pattern = r"^[a-zA-Z0-9].{2,11}#[0-9]{4,5}$"
+        if not re.match(pattern, battletag):
+            return False
+        return True
+    
 class Right_Frame(ctk.CTkFrame):
     def __init__(self, master):
         super().__init__(master)
