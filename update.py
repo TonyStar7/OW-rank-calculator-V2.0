@@ -2,6 +2,7 @@ import sys
 import os
 import requests
 import subprocess
+import traceback
 
 GITHUB_USER = "TonyStar7"
 GITHUB_REPO = "OW-rank-calculator-V2.0"
@@ -31,8 +32,9 @@ def check_for_update():
             f.write(f'@echo off\ntimeout /t 2 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
         subprocess.Popen(bat, shell=True)
         sys.exit()
-    except Exception as e:
-        print(e)
+    except Exception:
+        traceback.print_exc()
+        input("Press Enter to close...")
     
 if getattr(sys,'frozen', False):
     check_for_update()
