@@ -23,9 +23,12 @@ jobs:
               run: | 
                 pip install -r requirements.txt
                 pip install pyinstaller
+                
+            - name: Write version file
+              run: echo ${{ github.ref_name }} > version.txt
 
             - name: Build exe
-              run: pyinstaller --onefile main.py
+              run: pyinstaller --onefile --add-data "version.txt;." --name OW_app main.py
             
             - name: Upload to Github Releases
               uses: softprops/action-gh-release@v2
