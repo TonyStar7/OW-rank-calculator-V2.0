@@ -43,7 +43,7 @@ def check_for_update():
         with open(bat, "w") as f:
             f.write(f'@echo off\ntimeout /t 4 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
 
-        subprocess.Popen(bat, shell=True)
+        subprocess.Popen(bat, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
         sys.exit()
     except Exception:
         print("No update or error")
