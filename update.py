@@ -23,18 +23,19 @@ def check_for_update():
     try:
         latest = requests.get(GITHUB_API, timeout=5).json()["tag_name"]
         if latest == get_curr_version():
-            return
+            print("Just no update")
+            return False
+        
         new_exe = sys.executable + ".new"
         with open(new_exe, "wb") as f:
             f.write(requests.get(DOWNLOAD_URL).content)
         bat = os.path.join(os.path.dirname(sys.executable), "update.bat")
+
         with open(bat, "w") as f:
             f.write(f'@echo off\ntimeout /t 2 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
+
         subprocess.Popen(bat, shell=True)
         sys.exit()
     except Exception:
-        traceback.print_exc()
-        input("Press Enter to close...")
-    
-if getattr(sys,'frozen', False):
-    check_for_update()
+        print("No update or error")
+        return False

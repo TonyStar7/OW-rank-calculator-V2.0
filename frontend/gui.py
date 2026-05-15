@@ -14,7 +14,7 @@ sys.path.append(PROJECT_ROOT)
 import backend.src.processor as process
 import backend.src.player_list as data
 import backend.src.connect_database as db
-
+import update as up
 
 font_size = 16
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -140,6 +140,7 @@ class Right_Frame(ctk.CTkFrame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=1)
+        self.grid_rowconfigure(3, weight=1)
 
         self.refresh_button = ctk.CTkButton(self,
                                 text="Refresh",
@@ -153,6 +154,18 @@ class Right_Frame(ctk.CTkFrame):
         self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
         self.status_label.grid(row=1, column=0, columnspan=3, padx=20, pady=(0, 20), sticky="nsew")
 
+        self.update_button = ctk.CTkButton(self,
+                                        text="Update version",
+                                        fg_color="#1a498a",
+                                        hover_color="#225bab",
+                                        font=ctk.CTkFont(size=font_size, weight="bold"),
+                                        command=async_handler(self.on_update_click)
+                                    )
+        self.update_button.grid(row=4, column=2, padx=20, pady=20, sticky="s")
+
+        self.update_status = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
+        self.update_status.grid(row=5, column=2, columnspan=3, padx=20, pady=(0, 20), sticky="nsew")
+
     async def on_refresh_click(self):
         self.refresh_button.configure(state="disabled", text="Refreshing...")
         success = await process.refresh_players()
@@ -163,6 +176,16 @@ class Right_Frame(ctk.CTkFrame):
         else:
             self.status_label.configure(text="Players not refreshed", text_color="red")
         self.refresh_button.configure(state="normal", text="Refresh")
+
+    async def on_update_click(self):
+        self.update_button.configure(state="disabled", text="Updating...")
+        if getattr(sys,'frozen', False):        # NEVER remove this line or it will overwrite your python interpretor itself
+            update_found = up.check_for_update()
+            if not update_found:
+                self.update_status.configure(text="No update available", text_color="#c11a1a")
+                self.after(6000, lambda: self.update_status.configure(text=""))
+        self.update_button.configure(state="normal", text="Update version")
+
 
 class Scrollable_Frame(ctk.CTkScrollableFrame):
     def __init__(self, master):
