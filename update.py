@@ -54,12 +54,6 @@ start "" "{sys.executable}"
 del "%~f0"
 ''')
 
-        subprocess.Popen(
-            f'cmd /c timeout /t 6 /nobreak && start "" "{sys.executable}"',
-            shell=True,
-            creationflags=subprocess.CREATE_NO_WINDOW
-        )
-
         subprocess.Popen(bat, shell=True, creationflags=subprocess.CREATE_NO_WINDOW)
         sys.exit()
     except Exception:
