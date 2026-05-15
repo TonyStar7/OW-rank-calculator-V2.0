@@ -41,7 +41,7 @@ def check_for_update():
 
         bat = os.path.join(os.path.dirname(sys.executable), "update.bat")
         with open(bat, "w") as f:
-            f.write(f'@echo off\ntimeout /t 2 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
+            f.write(f'@echo off\ntimeout /t 4 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
 
         subprocess.Popen(bat, shell=True)
         sys.exit()
