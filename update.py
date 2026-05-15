@@ -49,7 +49,7 @@ if errorlevel 1 (
     timeout /t 2 /nobreak
     move /y "{new_exe}" "{sys.executable}"
 )
-timeout /t 1 /nobreak
+timeout /t 3 /nobreak
 start "" "{sys.executable}"
 del "%~f0"
 ''')
