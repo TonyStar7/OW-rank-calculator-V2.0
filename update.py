@@ -23,14 +23,23 @@ def check_for_update():
     try:
         latest = requests.get(GITHUB_API, timeout=5).json()["tag_name"]
         if latest == get_curr_version():
-            print("Just no update")
+            print("Just no update available")
             return False
         
         new_exe = sys.executable + ".new"
-        with open(new_exe, "wb") as f:
-            f.write(requests.get(DOWNLOAD_URL).content)
-        bat = os.path.join(os.path.dirname(sys.executable), "update.bat")
 
+        response = requests.get(DOWNLOAD_URL)
+        if response.status_code != 200:
+            return False
+
+        with open(new_exe, "wb") as f:
+            f.write(response.content)
+
+        if os.path.getsize(new_exe) < 10000000:
+            os.remove(new_exe)
+            return False
+
+        bat = os.path.join(os.path.dirname(sys.executable), "update.bat")
         with open(bat, "w") as f:
             f.write(f'@echo off\ntimeout /t 2 /nobreak\nmove /y "{new_exe}" "{sys.executable}"\nstart "" "{sys.executable}"\ndel "%~f0"')
 
