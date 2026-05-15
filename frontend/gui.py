@@ -73,7 +73,7 @@ class Left_Frame(ctk.CTkFrame):
         self.status_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
         self.status_label.grid(row=1, column=0, columnspan=2, padx=20, pady=(0, 20))
 
-        self.test_label = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
+        self.test_label = ctk.CTkLabel(self, text="retest", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
         self.test_label.grid(row=2, column=0, columnspan=2, padx=20, pady=(0, 20))
 
         self.bind("<Button-1>", self.drop_focus)
