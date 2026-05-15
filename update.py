@@ -41,7 +41,7 @@ def check_for_update():
 
         bat = os.path.join(os.path.dirname(sys.executable), "update.bat")
         with open(bat, "w") as f:
-            f.writef.write(f'''@echo off
+            f.write(f'''@echo off
                 timeout /t 4 /nobreak
                 move /y "{new_exe}" "{sys.executable}"
                 if errorlevel 1 (
