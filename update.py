@@ -11,13 +11,24 @@ DOWNLOAD_URL = f"https://github.com/{GITHUB_USER}/{GITHUB_REPO}/releases/latest/
 
 def get_curr_version():
     if getattr(sys, 'frozen', False):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.dirname(__file__)
-
-    version_file = os.path.join(base_path, "version.txt")
-    with open(version_file, "r") as f:
-        return f.read().strip()
+        try:
+            version_file = os.path.join(sys._MEIPASS, "version.txt")
+            if os.path.exists(version_file):
+                with open(version_file, "r") as f:
+                    return f.read().strip()
+        except Exception:
+            pass
+    
+    # Development Mode
+    try:
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        return subprocess.check_output(
+            ["git", "describe", "--tags", "--always"], 
+            cwd=project_root, 
+            stderr=subprocess.DEVNULL
+        ).decode("utf-8").strip()
+    except Exception:
+        return "v0.0.0-dev"
     
 def check_for_update():
     try:
