@@ -6,6 +6,7 @@ from PIL import Image
 import os
 import sys
 import re
+import subprocess
 from async_tkinter_loop import async_handler
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -20,6 +21,19 @@ font_size = 16
 FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAR_DIR = os.path.dirname(FILE_DIR)
 IMG_DIR = os.path.join(PAR_DIR, "frontend", "assets")
+
+def get_version():
+    try:
+        version = subprocess.check_output(
+            ["git", "describe", "--tags", "--always"], 
+            cwd=PROJECT_ROOT, 
+            stderr=subprocess.DEVNULL
+        ).decode("utf-8").strip()
+        return version
+    except Exception:
+        return "v1.0.0-release"
+
+curr_version = get_version()
 
 def resource_path(relative_path):
     try:
@@ -168,6 +182,9 @@ class Right_Frame(ctk.CTkFrame):
 
         self.update_status = ctk.CTkLabel(self, text="", font=ctk.CTkFont(size=font_size - 2, weight="bold"))
         self.update_status.grid(row=5, column=2, columnspan=3, padx=20, pady=(0, 20), sticky="nsew")
+
+        self.version = ctk.CTkLabel(self, text=curr_version, font=ctk.CTkFont(size=font_size - 4, weight="bold"))
+        self.version.grid(row=6, column=2, columnspan=3, padx=20, pady=(0, 20), sticky="nsew")
 
     async def on_refresh_click(self):
         self.refresh_button.configure(state="disabled", text="Refreshing...")
