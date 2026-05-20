@@ -1,6 +1,4 @@
 from async_tkinter_loop import async_mainloop
-import sys 
-import os
 
 
 from frontend.gui import App

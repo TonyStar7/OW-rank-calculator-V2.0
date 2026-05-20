@@ -22,18 +22,7 @@ FILE_DIR = os.path.dirname(os.path.abspath(__file__))
 PAR_DIR = os.path.dirname(FILE_DIR)
 IMG_DIR = os.path.join(PAR_DIR, "frontend", "assets")
 
-def get_version():
-    try:
-        version = subprocess.check_output(
-            ["git", "describe", "--tags", "--always"], 
-            cwd=PROJECT_ROOT, 
-            stderr=subprocess.DEVNULL
-        ).decode("utf-8").strip()
-        return version
-    except Exception:
-        return "v1.0.0-release"
-
-curr_version = get_version()
+curr_version = up.get_curr_version()
 
 def resource_path(relative_path):
     try:
