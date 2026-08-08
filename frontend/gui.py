@@ -44,7 +44,7 @@ PLATINUM_IMG    = resource_path("frontend/assets/Platinum_icon.png")
 DIAMOND_IMG     = resource_path("frontend/assets/Diamond_icon.png")
 MASTER_IMG      = resource_path("frontend/assets/Master_icon.png")
 GRANDMASTER_IMG = resource_path("frontend/assets/Grandmaster_icon.png")
-
+CHAMPION_IMG    = resource_path("frontend/assets/Champion_icon.png")
 
 class Left_Frame(ctk.CTkFrame):
     def __init__(self, master):
@@ -329,6 +329,7 @@ class Player_list_Frame(ctk.CTkFrame):
             "Diamond": DIAMOND_IMG,
             "Master": MASTER_IMG,
             "Grandmaster": GRANDMASTER_IMG,
+            "Ultimate": CHAMPION_IMG
         }
         found_key = None
         for key in game_ranks:
