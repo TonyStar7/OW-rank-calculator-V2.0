@@ -41,6 +41,7 @@ BRONZE_IMG      = resource_path("frontend/assets/Bronze_icon.png")
 SILVER_IMG      = resource_path("frontend/assets/Silver_icon.png")    
 GOLD_IMG        = resource_path("frontend/assets/Gold_icon.png")
 PLATINUM_IMG    = resource_path("frontend/assets/Platinum_icon.png")
+EMERALD_IMG     = resource_path("frontend/assets/Emerald_icon.png")
 DIAMOND_IMG     = resource_path("frontend/assets/Diamond_icon.png")
 MASTER_IMG      = resource_path("frontend/assets/Master_icon.png")
 GRANDMASTER_IMG = resource_path("frontend/assets/Grandmaster_icon.png")
@@ -326,6 +327,7 @@ class Player_list_Frame(ctk.CTkFrame):
             "Silver": SILVER_IMG,
             "Gold": GOLD_IMG,
             "Platinum": PLATINUM_IMG,
+            "Emerald": EMERALD_IMG,
             "Diamond": DIAMOND_IMG,
             "Master": MASTER_IMG,
             "Grandmaster": GRANDMASTER_IMG,

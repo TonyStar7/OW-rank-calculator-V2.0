@@ -171,7 +171,8 @@ def time_ago(refreshed_date):
 Ranks_list = ["Bronze5", "Bronze4", "Bronze3", "Bronze2", "Bronze1", 
                 "Silver5", "Silver4", "Silver3", "Silver2", "Silver1", 
                 "Gold5", "Gold4", "Gold3", "Gold2", "Gold1", 
-                "Platinum5", "Platinum4", "Platinum3", "Platinum2", "Platinum1", 
+                "Platinum5", "Platinum4", "Platinum3", "Platinum2", "Platinum1",
+                "Emerald5", "Emerald4", "Emerald3", "Emerald2", "Emerald1",
                 "Diamond5", "Diamond4", "Diamond3", "Diamond2", "Diamond1",
                 "Master5", "Master4", "Master3", "Master2", "Master1", 
                 "Grandmaster5", "Grandmaster4", "Grandmaster3", "Grandmaster2", "Grandmaster1",
@@ -188,13 +189,13 @@ def get_rank_index(rank_text):
     
 def get_span(rank_text):    # Gets the range
     curr_idx = get_rank_index(rank_text)
-    if curr_idx <= 19:       # Bronze 5 to Platinum 1
+    if curr_idx <= 24:       # Bronze 5 to Platinum 1
         min_span, max_span = 5, 5
-    elif 20 <= curr_idx <= 24: # Diamond
+    elif 20 <= curr_idx <= 29: # Diamond
         min_span , max_span = 5, 4
-    elif 25 <= curr_idx <= 29: # Master
+    elif 25 <= curr_idx <= 34: # Master
         min_span, max_span = 4, 3
-    elif 30 <= curr_idx <= 34: # Grandmaster
+    elif 30 <= curr_idx <= 39: # Grandmaster
         min_span, max_span = 3, 2
     else:                    # Champion
         min_span, max_span = 2, 2
